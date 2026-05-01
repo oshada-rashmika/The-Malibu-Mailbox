@@ -10,6 +10,15 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  --color-rose-gold: #E0BFB8;
+  --color-blush-pink: #F5E1E1;
+  --color-silk-white: #F9F7F7;
+  --color-deep-velvet: #2D0B0B;
+
+  --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  --shadow-glass-sm: 0 4px 16px 0 rgba(31, 38, 135, 0.2);
+  --shadow-glass-border: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
 @media (prefers-color-scheme: dark) {
