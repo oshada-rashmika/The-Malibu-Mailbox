@@ -19,8 +19,13 @@ export default async function DashboardPage() {
     redirect('/login');
   }
 
-  // Fetch today's letter. 
-  const today = new Date().toISOString().split('T')[0];
+  // Fetch today's letter in the local timezone (Asia/Colombo)
+  const today = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Colombo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
   
   const { data: letter } = await supabase
     .from('letters')
@@ -65,4 +70,4 @@ export default async function DashboardPage() {
       </div>
     </main>
   );
-}
+}
