@@ -11,7 +11,13 @@ export default async function AdminDashboard() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user || user.email !== 'samanmali@gmail.com') {
+  if (!user) {
+    redirect('/admin/login');
+  }
+
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+
+  if (!profile || profile.role !== 'admin') {
     redirect('/dashboard');
   }
 
