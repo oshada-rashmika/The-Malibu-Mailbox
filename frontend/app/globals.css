@@ -54,6 +54,29 @@ body {
   color: var(--foreground);
 }
 
+/* Custom styles for React Quill in Admin Noir theme */
+.quill-noir .ql-toolbar {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+.quill-noir .ql-container {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+.quill-noir .ql-editor {
+  min-height: 16rem;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+}
+.quill-noir .ql-stroke {
+  stroke: #E0BFB8 !important; /* rose-gold stroke for buttons */
+}
+.quill-noir .ql-fill {
+  fill: #E0BFB8 !important;
+}
+.quill-noir .ql-snow .ql-picker {
+  color: #E0BFB8 !important;
+}
+
 @keyframes gradient {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
