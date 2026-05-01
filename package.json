@@ -1,0 +1,28 @@
+{
+  "name": "the-malibu-mailbox",
+  "version": "1.0.0",
+  "description": "> “Some love letters aren’t written all at once… they arrive, one magical day at a time.” ✨",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oshada-rashmika/The-Malibu-Mailbox.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/oshada-rashmika/The-Malibu-Mailbox/issues"
+  },
+  "homepage": "https://github.com/oshada-rashmika/The-Malibu-Mailbox#readme",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.2.1",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.8.3",
+    "typescript-eslint": "^8.59.1"
+  }
+}
