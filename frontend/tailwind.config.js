@@ -13,6 +13,10 @@ export default {
         'glass-sm': '0 4px 16px 0 rgba(31, 38, 135, 0.2)',
         'glass-border': 'inset 0 0 0 1px rgba(255, 255, 255, 0.1)',
       },
+      fontFamily: {
+        sans: ['var(--font-sans)', 'sans-serif'],
+        serif: ['var(--font-serif)', 'serif'],
+      },
     },
   },
 }
