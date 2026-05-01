@@ -67,4 +67,46 @@ router.post('/letters', async (req, res, next) => {
   }
 });
 
+// POST /api/admin/vouchers
+router.post('/vouchers', async (req, res, next) => {
+  try {
+    const { title, description, code, user_id } = req.body;
+
+    if (!title || !description) {
+      return res.status(400).json({
+        success: false,
+        message: 'Voucher title and description are required.',
+      });
+    }
+
+    const { data, error } = await supabase
+      .from('vouchers')
+      .insert([{
+        title,
+        description,
+        code: code || null,
+        user_id: user_id, // include user_id if managing specifically per user
+        is_redeemed: false,
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to create the voucher.',
+        error: error.message,
+      });
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Voucher successfully minted! 🎁',
+      data,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;
