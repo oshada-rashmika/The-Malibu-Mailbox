@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import VoucherCard from '../../../../components/VoucherCard';
 
 type Voucher = {
   id: string;
@@ -94,42 +95,13 @@ export default function WalletClient({ vouchers }: { vouchers: Voucher[] }) {
               </div>
             ) : (
               filteredVouchers.map((voucher) => (
-                <div
-                  key={voucher.id}
-                  className={`group relative flex items-center p-6 bg-white/60 backdrop-blur-xl border border-white/60 rounded-3xl transition-all duration-300 hover:shadow-glass-sm hover:-translate-y-1 ${
-                    voucher.is_used ? 'opacity-60 grayscale-[50%]' : 'shadow-sm'
-                  }`}
-                >
-                  {/* Minimalist Icon / Monogram */}
-                  <div className="w-14 h-14 shrink-0 rounded-full bg-silk-white border border-rose-gold/30 flex items-center justify-center shadow-inner mr-6">
-                    <span className="text-xl font-serif text-deep-velvet">
-                      {voucher.title ? voucher.title.charAt(0).toUpperCase() : 'V'}
-                    </span>
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-serif text-deep-velvet truncate mb-1">
-                      {voucher.title || 'Special Gift'}
-                    </h3>
-                    <p className="text-sm font-sans text-deep-velvet/70 line-clamp-2">
-                      {voucher.description || 'A token of appreciation.'}
-                    </p>
-                    
-                    {voucher.code && !voucher.is_used && (
-                      <div className="mt-3 inline-block px-3 py-1 bg-rose-gold/20 border border-rose-gold/40 rounded-lg text-xs font-mono font-medium tracking-widest text-[#a57070]">
-                        {voucher.code}
-                      </div>
-                    )}
-                  </div>
-
-                  {voucher.is_used && (
-                    <div className="absolute top-4 right-4">
-                      <span className="px-2 py-1 bg-deep-velvet/5 text-deep-velvet/40 text-[10px] uppercase tracking-widest font-bold rounded">
-                        Redeemed
-                      </span>
-                    </div>
-                  )}
-                </div>
+                <VoucherCard 
+                  key={voucher.id} 
+                  title={voucher.title} 
+                  description={voucher.description} 
+                  code={voucher.code} 
+                  isUsed={voucher.is_used} 
+                />
               ))
             )}
           </motion.div>
