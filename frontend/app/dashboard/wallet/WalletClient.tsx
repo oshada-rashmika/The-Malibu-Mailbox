@@ -16,10 +16,17 @@ type Voucher = {
 
 export default function WalletClient({ vouchers }: { vouchers: Voucher[] }) {
   const [activeTab, setActiveTab] = useState<'available' | 'used'>('available');
+  const [localVouchers, setLocalVouchers] = useState<Voucher[]>(vouchers);
 
-  const filteredVouchers = vouchers.filter((v) =>
+  const filteredVouchers = localVouchers.filter((v) =>
     activeTab === 'available' ? !v.is_used : v.is_used
   );
+
+  const handleRedeemSuccess = (id: string) => {
+    setLocalVouchers((prev) =>
+      prev.map((v) => (v.id === id ? { ...v, is_used: true } : v))
+    );
+  };
 
   return (
     <div className="relative z-10 w-full max-w-4xl mx-auto flex flex-col items-center">
@@ -96,11 +103,13 @@ export default function WalletClient({ vouchers }: { vouchers: Voucher[] }) {
             ) : (
               filteredVouchers.map((voucher) => (
                 <VoucherCard 
-                  key={voucher.id} 
+                  key={voucher.id}
+                  id={voucher.id}
                   title={voucher.title} 
                   description={voucher.description} 
                   code={voucher.code} 
-                  isUsed={voucher.is_used} 
+                  isUsed={voucher.is_used}
+                  onRedeem={handleRedeemSuccess} 
                 />
               ))
             )}

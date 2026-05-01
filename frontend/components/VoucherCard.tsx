@@ -2,18 +2,22 @@
 
 import React, { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
+import confetti from 'canvas-confetti';
 
 interface VoucherCardProps {
+  id: string;
   title: string;
   description: string;
   code?: string;
   isUsed?: boolean;
+  onRedeem?: (id: string) => void;
 }
 
-export default function VoucherCard({ title, description, code, isUsed }: VoucherCardProps) {
+export default function VoucherCard({ id, title, description, code, isUsed, onRedeem }: VoucherCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [mousePos, setMousePosition] = useState({ x: 50, y: 50 });
   const [isHovered, setIsHovered] = useState(false);
+  const [isRedeeming, setIsRedeeming] = useState(false);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!cardRef.current || isUsed) return;
@@ -32,6 +36,56 @@ export default function VoucherCard({ title, description, code, isUsed }: Vouche
     setIsHovered(false);
     // Smoothly return to center when mouse leaves
     setMousePosition({ x: 50, y: 50 });
+  };
+
+  const handleRedeemClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isUsed || isRedeeming) return;
+
+    setIsRedeeming(true);
+    try {
+      const res = await fetch(`http://localhost:5000/api/vouchers/${id}/redeem`, {
+        method: 'PATCH',
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        // Fire celebration confetti!
+        const duration = 3000;
+        const end = Date.now() + duration;
+
+        const frame = () => {
+          confetti({
+            particleCount: 5,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0 },
+            colors: ['#E0BFB8', '#F5E1E1', '#FFD700', '#FF69B4', '#a8c0ff']
+          });
+          confetti({
+            particleCount: 5,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1 },
+            colors: ['#E0BFB8', '#F5E1E1', '#FFD700', '#FF69B4', '#a8c0ff']
+          });
+
+          if (Date.now() < end) {
+            requestAnimationFrame(frame);
+          }
+        };
+        frame();
+
+        // Notify parent after a short delay so user enjoys the effect
+        setTimeout(() => {
+          if (onRedeem) onRedeem(id);
+        }, 1000);
+      }
+    } catch (error) {
+      console.error('Failed to redeem voucher', error);
+    } finally {
+      setIsRedeeming(false);
+    }
   };
 
   // Convert mouse X position to a rotational angle for the conic gradient
@@ -61,13 +115,13 @@ export default function VoucherCard({ title, description, code, isUsed }: Vouche
       )}
 
       {/* Boutique Icon */}
-      <div className="w-14 h-14 shrink-0 rounded-full bg-silk-white border border-rose-gold/30 flex items-center justify-center shadow-inner mr-6 z-10">
+      <div className="w-14 h-14 shrink-0 rounded-full bg-silk-white border border-rose-gold/30 flex items-center justify-center shadow-inner mr-6 z-10 transition-transform group-hover:scale-105">
         <span className="text-xl font-serif text-deep-velvet">
           {title ? title.charAt(0).toUpperCase() : 'V'}
         </span>
       </div>
 
-      <div className="flex-1 min-w-0 z-10">
+      <div className="flex-1 min-w-0 z-10 mr-4">
         {/* Holographic Foil Text */}
         <h3
           className="text-xl font-serif truncate mb-1 transition-all duration-300"
@@ -94,8 +148,20 @@ export default function VoucherCard({ title, description, code, isUsed }: Vouche
         )}
       </div>
 
+      {!isUsed && (
+        <div className="z-10 ml-2">
+          <button
+            onClick={handleRedeemClick}
+            disabled={isRedeeming}
+            className="px-4 py-2 bg-deep-velvet text-silk-white rounded-full text-xs font-bold tracking-widest uppercase transition-all duration-300 hover:shadow-glass hover:bg-[#3D1414] hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed border border-transparent hover:border-rose-gold/40"
+          >
+            {isRedeeming ? '...' : 'Redeem'}
+          </button>
+        </div>
+      )}
+
       {isUsed && (
-        <div className="absolute top-4 right-4">
+        <div className="absolute top-4 right-4 z-10">
           <span className="px-2 py-1 bg-deep-velvet/5 text-deep-velvet/40 text-[10px] uppercase tracking-widest font-bold rounded">
             Redeemed
           </span>
