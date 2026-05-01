@@ -1,8 +1,8 @@
 import React from 'react';
 import { createClient } from '../../utils/supabase/server';
 import { redirect } from 'next/navigation';
-import Link from 'next/link';
 import AdminForms from './AdminForms';
+import { adminSignOut } from './login/actions';
 
 export default async function AdminDashboard() {
   const supabase = await createClient();
@@ -29,12 +29,14 @@ export default async function AdminDashboard() {
 
       <div className="relative z-10 w-full max-w-6xl mx-auto flex flex-col items-center">
         <header className="text-center mb-16 w-full relative">
-          <Link
-            href="/dashboard"
-            className="absolute left-0 top-1/2 -translate-y-1/2 text-xs font-semibold tracking-widest uppercase text-rose-gold/60 hover:text-rose-gold transition-colors"
-          >
-            ← Exit
-          </Link>
+          <form action={adminSignOut} className="absolute left-0 top-1/2 -translate-y-1/2">
+            <button
+              type="submit"
+              className="text-xs font-semibold tracking-widest uppercase text-rose-gold/60 hover:text-rose-gold transition-colors"
+            >
+              ← Exit
+            </button>
+          </form>
           <h1 className="text-4xl md:text-5xl font-serif text-rose-gold mb-4 tracking-tight drop-shadow-sm">
             Command Center
           </h1>

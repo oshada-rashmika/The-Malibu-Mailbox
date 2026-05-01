@@ -38,3 +38,9 @@ export async function adminLogin(formData: FormData) {
   // Use the requested redirect to admin dashboard, or to the root admin path
   redirect('/admin');
 }
+
+export async function adminSignOut() {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  redirect('/admin/login');
+}

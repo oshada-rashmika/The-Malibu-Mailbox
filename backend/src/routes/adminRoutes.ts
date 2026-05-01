@@ -42,14 +42,15 @@ router.post('/letters', async (req, res, next) => {
         title: title || 'A Secret Letter',
         content,
         scheduled_for: date, // Format YYYY-MM-DD expected
-        delivery_date: date, // Mapping to dashboard requirement
-        user_id: user_id, // Important if your database schema secures rows by RLS
-        is_opened: false
+        user_id: user_id || null, // Important if your database schema secures rows by RLS
       }])
+
+
       .select()
       .single();
 
     if (error) {
+      console.error('[Admin] Error saving letter:', error);
       return res.status(500).json({
         success: false,
         message: 'Failed to save the letter.',
@@ -92,6 +93,7 @@ router.post('/vouchers', async (req, res, next) => {
       .single();
 
     if (error) {
+      console.error('[Admin] Error creating voucher:', error);
       return res.status(500).json({
         success: false,
         message: 'Failed to create the voucher.',

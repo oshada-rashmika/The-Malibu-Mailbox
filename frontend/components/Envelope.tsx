@@ -1,13 +1,14 @@
 'use client';
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 
 interface EnvelopeProps {
   children?: React.ReactNode;
+  onLetterClick?: () => void;
+  title?: string;
 }
 
-export default function Envelope({ children }: EnvelopeProps) {
+export default function Envelope({ children, onLetterClick, title }: EnvelopeProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -25,13 +26,32 @@ export default function Envelope({ children }: EnvelopeProps) {
         {/* The Letter */}
         <motion.div
           initial={false}
-          animate={{ y: isOpen ? -140 : 0 }}
+          animate={{ y: isOpen ? -110 : 0 }}
           transition={{ duration: 0.8, delay: isOpen ? 0.3 : 0, ease: 'backOut' }}
-          className="absolute inset-x-4 top-4 bottom-2 bg-silk-white rounded-sm shadow-glass-sm p-6 flex flex-col items-center text-center overflow-hidden z-20"
+          onClick={(e) => {
+            if (isOpen && onLetterClick) {
+              e.stopPropagation();
+              onLetterClick();
+            }
+          }}
+          className="absolute inset-x-4 top-4 bottom-2 bg-silk-white rounded-sm shadow-glass-sm flex flex-col items-center justify-center text-center overflow-hidden z-20"
         >
-          <div className="w-full h-full border border-rose-gold/30 rounded flex flex-col items-center justify-center p-4">
-            {children || (
-              <div className="flex flex-col items-center justify-center opacity-80 mt-2">
+          <div className="w-full h-full border border-rose-gold/30 rounded flex flex-col items-center justify-center px-5 py-4">
+            {title ? (
+              <div className="flex flex-col items-center justify-center gap-2 w-full">
+                <div className="h-px w-8 bg-rose-gold/30" />
+                <h2 className="text-sm font-serif text-deep-velvet leading-snug text-center line-clamp-2 w-full px-1">
+                  {title}
+                </h2>
+                <div className="h-px w-8 bg-rose-gold/30" />
+                {isOpen && (
+                  <span className="text-[9px] uppercase tracking-[0.2em] font-sans text-[#a57070] mt-1">
+                    Tap to read
+                  </span>
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center opacity-80">
                 <span className="text-xl font-serif text-deep-velvet italic">A secret letter...</span>
                 <div className="h-px w-12 bg-rose-gold/50 my-3" />
                 <span className="text-[10px] uppercase tracking-[0.2em] font-sans text-[#a57070]">Tap to discover</span>
@@ -44,10 +64,8 @@ export default function Envelope({ children }: EnvelopeProps) {
         <div className="absolute inset-0 z-30 pointer-events-none drop-shadow-sm">
           {/* Left flap */}
           <div className="absolute top-0 left-0 w-0 h-0 border-y-[112px] border-y-transparent border-l-[160px] border-l-[#dcb0a7]" />
-          
           {/* Right flap */}
           <div className="absolute top-0 right-0 w-0 h-0 border-y-[112px] border-y-transparent border-r-[160px] border-r-[#dcb0a7]" />
-          
           {/* Bottom flap */}
           <div className="absolute bottom-0 left-0 w-0 h-0 border-x-[160px] border-x-transparent border-b-[112px] border-b-[#E0BFB8]" />
         </div>
@@ -66,11 +84,10 @@ export default function Envelope({ children }: EnvelopeProps) {
           style={{ transformOrigin: 'top' }}
           className="absolute top-0 left-0 w-[320px] h-[112px] origin-top flex drop-shadow-md"
         >
-          {/* Drawing the top flap triangle */}
           <div className="w-0 h-0 border-x-[160px] border-x-transparent border-t-[112px] border-t-[#ebd0ca]" />
-          
-          {/* Decorative wax seal (optional flavor) */}
-          <motion.div 
+
+          {/* Wax seal */}
+          <motion.div
             animate={{ opacity: isOpen ? 0 : 1 }}
             transition={{ duration: 0.2 }}
             className="absolute top-[96px] left-[144px] w-8 h-8 rounded-full bg-deep-velvet shadow-xl flex items-center justify-center"
