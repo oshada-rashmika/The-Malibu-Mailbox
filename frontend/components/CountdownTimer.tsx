@@ -66,7 +66,7 @@ export default function CountdownTimer() {
   return (
     <div className="flex flex-col items-center justify-center space-y-6">
       <h3 className="text-[#a57070] text-xs uppercase tracking-[0.3em] font-semibold">
-        Next Letter Unlocks In
+        Next delivery in...
       </h3>
 
       <div className="flex items-center justify-center gap-4 md:gap-6 text-deep-velvet font-serif text-5xl md:text-7xl">
