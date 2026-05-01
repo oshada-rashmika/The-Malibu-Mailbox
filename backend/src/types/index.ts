@@ -4,8 +4,8 @@ export interface Letter {
   scheduled_for: string; // ISO Date string (YYYY-MM-DD)
   title: string;
   content: string;
-  is_opened: boolean;
 }
+
 
 export interface Voucher {
   id: string;

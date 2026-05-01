@@ -54,6 +54,29 @@ body {
   color: var(--foreground);
 }
 
+/* Custom styles for React Quill in Admin Noir theme */
+.quill-noir .ql-toolbar {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+.quill-noir .ql-container {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+.quill-noir .ql-editor {
+  min-height: 16rem;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+}
+.quill-noir .ql-stroke {
+  stroke: #E0BFB8 !important; /* rose-gold stroke for buttons */
+}
+.quill-noir .ql-fill {
+  fill: #E0BFB8 !important;
+}
+.quill-noir .ql-snow .ql-picker {
+  color: #E0BFB8 !important;
+}
+
 @keyframes gradient {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
@@ -63,4 +86,62 @@ body {
 @utility animate-gradient {
   background-size: 200% 200%;
   animation: gradient 15s ease infinite;
+}
+
+/* Aggressive Quill Content Styling to override any inline styles */
+.quill-content, 
+.quill-content *,
+.quill-content p,
+.quill-content span,
+.quill-content strong,
+.quill-content em {
+  color: #2D0B0B !important;
+  font-family: inherit !important;
+}
+
+.quill-content p {
+  margin-bottom: 1.5em;
+  line-height: 1.8;
+}
+
+.quill-content strong {
+  font-weight: 700;
+}
+
+.quill-content em {
+  font-style: italic;
+  opacity: 0.8; /* Subtle difference for italics */
+}
+
+.quill-content h1, 
+.quill-content h2, 
+.quill-content h3 {
+  font-family: var(--font-serif) !important;
+  color: #2D0B0B !important;
+  margin-top: 2em;
+  margin-bottom: 1em;
+}
+
+
+
+/* Custom Scrollbar for Letter Modal */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(224, 191, 184, 0.3);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(224, 191, 184, 0.5);
+}
+
+@utility shadow-malibu-glow {
+  box-shadow: 0 0 20px rgba(224, 191, 184, 0.4), 0 0 40px rgba(224, 191, 184, 0.2);
 }

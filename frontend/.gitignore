@@ -1,10 +1,5 @@
 # Dependencies
 node_modules/
-.pnp
-.pnp.*
-
-# Testing
-coverage/
 
 # Next.js
 .next/
@@ -15,6 +10,7 @@ build/
 
 # Environment
 .env*
+!.env.example
 
 # Logs
 *.log
@@ -34,4 +30,3 @@ Thumbs.db
 
 # TypeScript
 *.tsbuildinfo
-next-env.d.ts
