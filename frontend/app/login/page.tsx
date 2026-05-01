@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { signIn } from './actions';
 
 export default function LoginPage() {
   return (
@@ -21,13 +22,14 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <form className="space-y-7" onSubmit={(e) => e.preventDefault()} autoComplete="off">
+        <form className="space-y-7" action={signIn} autoComplete="off">
           <div className="space-y-2">
             <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-[#a57070] ml-1">
               Email Address
             </label>
             <input
               type="email"
+              name="email"
               placeholder="your.email@example.com"
               autoComplete="new-password"
               defaultValue=""
@@ -41,6 +43,7 @@ export default function LoginPage() {
             </label>
             <input
               type="password"
+              name="password"
               placeholder="your secure password"
               autoComplete="new-password"
               defaultValue=""
