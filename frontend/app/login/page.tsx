@@ -1,10 +1,20 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { signIn } from './actions';
 
 export default function LoginPage() {
+  const [error, setError] = useState<string | null>(null);
+
+  const handleAction = async (formData: FormData) => {
+    setError(null);
+    const result = await signIn(formData);
+    if (result?.error) {
+      setError(result.error);
+    }
+  };
+
   return (
     <main className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-silk-white to-blush-pink overflow-hidden relative">
       {/* Decorative floating elements for extra romance */}
@@ -22,7 +32,12 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <form className="space-y-7" action={signIn} autoComplete="off">
+        <form className="space-y-7" action={handleAction} autoComplete="off">
+          {error && (
+            <div className="p-3 text-sm text-red-500 bg-red-100/50 rounded-xl text-center border border-red-500/20">
+              {error}
+            </div>
+          )}
           <div className="space-y-2">
             <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-[#a57070] ml-1">
               Email Address
