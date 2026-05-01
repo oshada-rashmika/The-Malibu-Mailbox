@@ -88,10 +88,15 @@ body {
   animation: gradient 15s ease infinite;
 }
 
-/* Quill Content Styling */
-.quill-content {
-  font-family: inherit;
-  color: inherit;
+/* Aggressive Quill Content Styling to override any inline styles */
+.quill-content, 
+.quill-content *,
+.quill-content p,
+.quill-content span,
+.quill-content strong,
+.quill-content em {
+  color: #2D0B0B !important;
+  font-family: inherit !important;
 }
 
 .quill-content p {
@@ -100,21 +105,24 @@ body {
 }
 
 .quill-content strong {
-  color: var(--deep-velvet);
   font-weight: 700;
 }
 
 .quill-content em {
   font-style: italic;
-  color: var(--rose-gold);
+  opacity: 0.8; /* Subtle difference for italics */
 }
 
-.quill-content h1, .quill-content h2, .quill-content h3 {
-  font-family: var(--font-serif);
-  color: var(--deep-velvet);
+.quill-content h1, 
+.quill-content h2, 
+.quill-content h3 {
+  font-family: var(--font-serif) !important;
+  color: #2D0B0B !important;
   margin-top: 2em;
   margin-bottom: 1em;
 }
+
+
 
 /* Custom Scrollbar for Letter Modal */
 .custom-scrollbar::-webkit-scrollbar {
@@ -132,4 +140,8 @@ body {
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(224, 191, 184, 0.5);
+}
+
+@utility shadow-malibu-glow {
+  box-shadow: 0 0 20px rgba(224, 191, 184, 0.4), 0 0 40px rgba(224, 191, 184, 0.2);
 }

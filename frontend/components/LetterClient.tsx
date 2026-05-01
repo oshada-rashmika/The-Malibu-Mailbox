@@ -96,9 +96,10 @@ export default function LetterClient({ letter }: LetterClientProps) {
                 </header>
 
                 <article
-                  className="prose prose-md md:prose-lg prose-rose-gold max-w-none text-deep-velvet/90 font-sans leading-relaxed quill-content pb-4 break-words [overflow-wrap:anywhere]"
+                  className="prose prose-md md:prose-lg prose-rose-gold max-w-none text-deep-velvet font-sans leading-relaxed quill-content pb-4 break-words [overflow-wrap:anywhere]"
                   dangerouslySetInnerHTML={{ __html: letter.content }}
                 />
+
               </div>
 
               <footer className="mt-auto p-6 md:p-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-rose-gold/10 bg-white/40 backdrop-blur-xl">

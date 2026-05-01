@@ -4,7 +4,7 @@ import { signOut } from '../app/login/actions';
 
 export default function DashboardNav() {
   return (
-    <nav className="w-full max-w-5xl mx-auto mb-10 flex items-center justify-between px-6 py-4 bg-white/10 backdrop-blur-lg border border-white/20 rounded-[2rem] shadow-glass-sm font-sans relative z-50">
+    <nav className="hidden md:flex w-full max-w-5xl mx-auto mb-10 items-center justify-between px-6 py-4 bg-white/10 backdrop-blur-lg border border-white/20 rounded-[2rem] shadow-glass-sm font-sans relative z-50">
       <div className="flex gap-4 md:gap-8 items-center">
         <Link
           href="/dashboard/history"
