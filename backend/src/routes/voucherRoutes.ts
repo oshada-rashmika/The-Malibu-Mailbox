@@ -4,13 +4,12 @@ import { Voucher } from '../types';
 
 const router = Router();
 
-// Get all unredeemed vouchers
+// Get all vouchers
 router.get('/', async (req, res, next) => {
   try {
     const { data, error } = await supabase
       .from('vouchers')
       .select('*')
-      .eq('is_redeemed', false)
       .order('created_at', { ascending: false });
 
     if (error) {
