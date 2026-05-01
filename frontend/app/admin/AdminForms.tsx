@@ -2,10 +2,10 @@
 
 import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
-import 'react-quill/dist/quill.snow.css';
+import 'react-quill-new/dist/quill.snow.css';
 
-// Dynamically import Quill to prevent SSR window reference errors
-const ReactQuill = dynamic(() => import('react-quill'), { 
+// Dynamically import react-quill-new to prevent SSR window reference errors and React 19 findDOMNode issues
+const ReactQuill = dynamic(() => import('react-quill-new'), { 
   ssr: false,
   loading: () => <div className="h-48 w-full bg-white/5 animate-pulse rounded-2xl border border-white/10" />
 });
