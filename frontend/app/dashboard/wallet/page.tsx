@@ -17,13 +17,17 @@ export default async function WalletPage() {
     redirect('/login');
   }
 
-  // Fetch user's vouchers via API
-  const res = await fetch(`${API_BASE_URL}/api/vouchers`, {
-    cache: 'no-store', // Optional: disable caching so the UI stays fresh
-  });
+  // Fetch user's vouchers directly using Supabase
+  const { data: supabaseVouchers, error } = await supabase
+    .from('vouchers')
+    .select('*')
+    .order('created_at', { ascending: false });
 
-  const body = await res.json();
-  const apiVouchers = body?.data || [];
+  if (error) {
+    console.error('Error fetching vouchers:', error);
+  }
+
+  const apiVouchers = supabaseVouchers || [];
 
   // Map backend scheme (is_redeemed) to our frontend expectation (is_used)
   const vouchers = apiVouchers.map((v: any) => ({
@@ -46,4 +50,4 @@ export default async function WalletPage() {
       <SanctuaryDock />
     </main>
   );
-}
+}
