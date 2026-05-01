@@ -3,6 +3,7 @@ import { createClient } from '../../../utils/supabase/server';
 import { redirect } from 'next/navigation';
 import WalletClient from './WalletClient';
 import SanctuaryDock from '../../../components/SanctuaryDock';
+import { API_BASE_URL } from '../../../utils/api';
 
 export default async function WalletPage() {
 
@@ -17,7 +18,7 @@ export default async function WalletPage() {
   }
 
   // Fetch user's vouchers via API
-  const res = await fetch('http://localhost:5000/api/vouchers', {
+  const res = await fetch(`${API_BASE_URL}/api/vouchers`, {
     cache: 'no-store', // Optional: disable caching so the UI stays fresh
   });
 

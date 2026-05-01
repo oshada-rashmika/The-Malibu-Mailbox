@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 import 'react-quill-new/dist/quill.snow.css';
+import { API_BASE_URL } from '../../utils/api';
+
 
 // Dynamically import react-quill-new to prevent SSR window reference errors and React 19 findDOMNode issues
 const ReactQuill = dynamic(() => import('react-quill-new'), { 
@@ -35,7 +37,8 @@ export default function AdminForms() {
     }
     setLetterStatus({ loading: true, message: 'Scheduling...', isError: false });
     try {
-      const res = await fetch('http://localhost:5000/api/admin/letters', {
+      const res = await fetch(`${API_BASE_URL}/api/admin/letters`, {
+
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -70,7 +73,7 @@ export default function AdminForms() {
     }
     setVoucherStatus({ loading: true, message: 'Minting...', isError: false });
     try {
-      const res = await fetch('http://localhost:5000/api/admin/vouchers', {
+      const res = await fetch(`${API_BASE_URL}/api/admin/vouchers`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

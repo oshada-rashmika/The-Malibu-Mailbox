@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import { API_BASE_URL } from '../utils/api';
 
 interface Letter {
   id: string;
@@ -23,7 +24,7 @@ export default function HistoryClient() {
 
   const fetchLetters = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/letters/history');
+      const res = await fetch(`${API_BASE_URL}/api/letters/history`);
       const data = await res.json();
       if (data.success) {
         setLetters(data.data);
@@ -38,9 +39,10 @@ export default function HistoryClient() {
   const handleUnsave = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     try {
-      const res = await fetch(`http://localhost:5000/api/letters/${id}/unsave`, {
+      const res = await fetch(`${API_BASE_URL}/api/letters/${id}/unsave`, {
         method: 'PATCH',
       });
+
       const data = await res.json();
       if (data.success) {
         setLetters((prev) => prev.filter((l) => l.id !== id));

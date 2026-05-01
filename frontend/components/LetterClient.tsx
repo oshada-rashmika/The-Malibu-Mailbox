@@ -3,8 +3,10 @@
 import React, { useState } from 'react';
 import Envelope from './Envelope';
 import { motion, AnimatePresence } from 'framer-motion';
+import { API_BASE_URL } from '../utils/api';
 
 interface Letter {
+
   id: string;
   title: string;
   content: string;
@@ -25,9 +27,10 @@ export default function LetterClient({ letter }: LetterClientProps) {
     
     setIsSaving(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/letters/${letter.id}/save`, {
+      const res = await fetch(`${API_BASE_URL}/api/letters/${letter.id}/save`, {
         method: 'PATCH',
       });
+
       const data = await res.json();
       if (data.success) {
         setIsSaved(true);

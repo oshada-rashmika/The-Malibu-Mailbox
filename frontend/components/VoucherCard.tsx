@@ -3,6 +3,7 @@
 import React, { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
+import { API_BASE_URL } from '../utils/api';
 
 interface VoucherCardProps {
   id: string;
@@ -48,7 +49,7 @@ export default function VoucherCard({ id, title, description, code, isUsed, onRe
 
     setIsRedeeming(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/vouchers/${id}/redeem`, {
+      const res = await fetch(`${API_BASE_URL}/api/vouchers/${id}/redeem`, {
         method: 'PATCH',
       });
       const data = await res.json();
