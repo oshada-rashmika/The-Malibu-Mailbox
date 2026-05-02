@@ -50,15 +50,17 @@ export default async function DashboardPage() {
       
       <div className="relative z-10 w-full max-w-5xl mx-auto flex flex-col items-center">
         
-        <MobileSignOut />
         <DashboardNav />
         <SanctuaryDock />
 
-        <header className="text-center mb-16 max-w-2xl w-full">
-          <h1 className="text-4xl md:text-5xl font-serif text-deep-velvet mb-4">
-            Your Sanctuary
-          </h1>
-          <div className="h-px w-24 bg-gradient-to-r from-transparent via-rose-gold to-transparent mx-auto" />
+        <header className="w-full flex flex-col-reverse md:flex-row items-center justify-between gap-6 mb-16 pt-8 px-4">
+          <div className="flex flex-col items-center md:items-start text-center md:text-left">
+            <h1 className="text-4xl md:text-5xl font-serif text-deep-velvet mb-4">
+              Your Sanctuary
+            </h1>
+            <div className="h-px w-24 bg-gradient-to-r from-transparent via-rose-gold to-transparent mx-auto md:mx-0" />
+          </div>
+          <MobileSignOut />
         </header>
 
         <section className="w-full max-w-2xl flex flex-col items-center space-y-16">
