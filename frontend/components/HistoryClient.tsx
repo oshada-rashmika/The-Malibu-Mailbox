@@ -75,17 +75,21 @@ export default function HistoryClient() {
   return (
     <>
       <div className="relative z-10 w-full max-w-5xl mx-auto flex flex-col items-center">
-        <header className="text-center mb-12 w-full relative">
-          <Link
-            href="/dashboard"
-            className="absolute left-0 top-1/2 -translate-y-1/2 text-xs font-semibold tracking-widest uppercase text-[#a57070] hover:text-deep-velvet transition-colors"
-          >
-            ← Back
-          </Link>
-          <h1 className="text-4xl md:text-5xl font-serif text-deep-velvet mb-4">
-            Saved Memories
-          </h1>
-          <div className="h-px w-24 bg-gradient-to-r from-transparent via-rose-gold to-transparent mx-auto" />
+        <header className="w-full mb-12 pt-6 px-4">
+          <div className="relative flex flex-col items-start gap-2 md:flex-row md:items-center md:justify-center">
+            <Link
+              href="/dashboard"
+              className="md:absolute md:left-0 md:top-1/2 md:-translate-y-1/2 text-xs font-semibold tracking-widest uppercase text-deep-velvet/60 hover:text-deep-velvet transition-colors"
+            >
+              ← Back
+            </Link>
+            <div className="w-full text-center">
+              <h1 className="text-4xl md:text-5xl font-serif text-deep-velvet mb-4">
+                Saved Memories
+              </h1>
+              <div className="h-px w-24 bg-gradient-to-r from-transparent via-rose-gold to-transparent mx-auto" />
+            </div>
+          </div>
         </header>
 
         {letters.length === 0 ? (

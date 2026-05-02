@@ -5,6 +5,7 @@ import DashboardNav from '../../components/DashboardNav';
 import CountdownTimer from '../../components/CountdownTimer';
 import LetterClient from '../../components/LetterClient';
 import SanctuaryDock from '../../components/SanctuaryDock';
+import MobileSignOut from '../../components/MobileSignOut';
 
 
 export default async function DashboardPage() {
@@ -49,6 +50,7 @@ export default async function DashboardPage() {
       
       <div className="relative z-10 w-full max-w-5xl mx-auto flex flex-col items-center">
         
+        <MobileSignOut />
         <DashboardNav />
         <SanctuaryDock />
 
