@@ -11,7 +11,7 @@ export default function MobileSignOut() {
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
-      className="absolute top-6 right-6 z-[60] md:hidden"
+      className="z-10"
     >
       <form action={signOut}>
         <button
