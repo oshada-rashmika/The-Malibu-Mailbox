@@ -115,8 +115,9 @@ router.post('/vouchers', async (req, res, next) => {
 router.post('/flowers', async (req, res, next) => {
   try {
     const { flower_type, meaning, color_hex, recipient_id } = req.body;
+    const cleanRecipientId = recipient_id?.trim();
 
-    if (!flower_type || !meaning || !color_hex || !recipient_id) {
+    if (!flower_type || !meaning || !color_hex || !cleanRecipientId) {
       return res.status(400).json({
         success: false,
         message: 'flower_type, meaning, color_hex, and recipient_id are required.',
@@ -129,8 +130,7 @@ router.post('/flowers', async (req, res, next) => {
         flower_type,
         meaning,
         color_hex,
-        recipient_id,
-        // sent_at can be defaulted to NOW() or let the DB handle it
+        user_id: cleanRecipientId, // Map frontend's recipient_id to DB's user_id
       }])
       .select()
       .single();

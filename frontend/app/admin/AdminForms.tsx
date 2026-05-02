@@ -120,7 +120,7 @@ export default function AdminForms() {
           flower_type: flowerType,
           meaning: flowerMeaning,
           color_hex: flowerColor,
-          recipient_id: flowerUserId
+          recipient_id: flowerUserId.trim()
         })
       });
       const data = await res.json();

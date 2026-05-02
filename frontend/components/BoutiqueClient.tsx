@@ -24,13 +24,25 @@ export default function BoutiqueClient({ userId }: { userId: string }) {
 
   const fetchFlowers = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/flowers?user_id=${userId}`);
+      const url = `${API_BASE_URL}/api/flowers?user_id=${userId}`;
+      console.log(`[Florist] Fetching blooms from: ${url}`);
+      
+      const res = await fetch(url);
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || `System error: ${res.status}`);
+      }
+
       const data = await res.json();
       if (data.success) {
+        console.log(`[Florist] Found ${data.data?.length || 0} blooms.`);
         setFlowers(data.data);
+      } else {
+        throw new Error(data.message || 'Failed to arrange blooms.');
       }
-    } catch (err) {
-      console.error('Failed to fetch flowers:', err);
+    } catch (err: any) {
+      console.error('[Florist] Bouquet error:', err.message);
     } finally {
       setLoading(false);
     }
@@ -51,7 +63,7 @@ export default function BoutiqueClient({ userId }: { userId: string }) {
               Digital Florist
             </h1>
             <div className="h-px w-24 bg-gradient-to-r from-transparent via-rose-gold to-transparent mx-auto" />
-            <p className="text-[#a57070] italic font-serif text-lg mt-4">
+            <p className="text-deep-velvet/80 italic font-serif text-lg mt-4">
               A curation of your timeless blooms
             </p>
           </div>
@@ -71,9 +83,18 @@ export default function BoutiqueClient({ userId }: { userId: string }) {
             animate={{ opacity: 1, y: 0 }}
             className="max-w-md text-center p-8 bg-white/30 backdrop-blur-md rounded-3xl border border-white/40 shadow-[0_8px_32px_0_rgba(31,38,135,0.05)] mb-20"
           >
-            <p className="text-deep-velvet/70 font-serif italic text-xl">
+            <p className="text-deep-velvet/70 font-serif italic text-xl mb-4">
               "Your garden is waiting for its first spark of love..."
             </p>
+            <div className="pt-4 border-t border-deep-velvet/10">
+              <p className="text-[10px] uppercase tracking-widest text-deep-velvet/40 mb-1">Your Recipient ID</p>
+              <code className="text-[10px] bg-white/40 px-2 py-1 rounded font-mono text-deep-velvet/60 select-all">
+                {userId}
+              </code>
+              <p className="text-[9px] text-deep-velvet/30 mt-2 italic">
+                (Ensure this ID matches exactly when minting flowers in the admin panel)
+              </p>
+            </div>
           </motion.div>
         ) : (
           <div className="relative flex justify-center items-end h-[300px] w-[300px] sm:w-[400px] mb-8">

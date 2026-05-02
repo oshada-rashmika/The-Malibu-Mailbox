@@ -17,10 +17,9 @@ export interface Voucher {
 
 export interface Flower {
   id: string;
-  created_at: string;
   sent_at: string;
   flower_type: string;
   meaning: string;
   color_hex: string;
-  recipient_id: string;
+  user_id: string; // Refers to the auth.users(id) in the DB
 }

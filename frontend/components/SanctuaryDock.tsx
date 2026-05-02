@@ -45,12 +45,12 @@ export default function SanctuaryDock() {
   const pathname = usePathname();
 
   return (
-    <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[90] md:hidden w-full max-w-fit px-4">
+    <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[90] md:hidden w-[95%] max-w-[420px]">
       <motion.nav
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: 'spring', damping: 20, stiffness: 100 }}
-        className="relative"
+        className="relative w-full"
       >
         {/* Isolated Background Layer to prevent flickering */}
         <div
@@ -60,7 +60,7 @@ export default function SanctuaryDock() {
 
         {/* Content Layer */}
         <div
-          className="relative flex items-center gap-2 p-2 px-6 z-10"
+          className="relative flex items-center justify-between px-2 py-2 z-10 w-full"
           style={{ transform: 'translateZ(0)' }}
         >
 
@@ -68,16 +68,16 @@ export default function SanctuaryDock() {
             const isActive = pathname === item.href;
             
             return (
-              <Link key={item.name} href={item.href}>
+              <Link key={item.name} href={item.href} className="flex-1 flex justify-center">
                 <motion.div
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
-                  className={`flex flex-col items-center gap-1 px-4 py-2 rounded-full transition-colors duration-300 ${
+                  className={`flex flex-col items-center gap-1 px-2 py-2 w-full rounded-full transition-colors duration-300 ${
                     isActive ? 'text-deep-velvet bg-white/20' : 'text-deep-velvet/50 hover:text-deep-velvet'
                   }`}
                 >
                   <div className="shrink-0">{item.icon}</div>
-                  <span className="text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">{item.name}</span>
+                  <span className="text-[9px] font-bold uppercase tracking-wider whitespace-nowrap">{item.name}</span>
                 </motion.div>
               </Link>
             );

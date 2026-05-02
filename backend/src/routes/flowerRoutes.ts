@@ -6,15 +6,18 @@ const router = Router();
 // GET /api/flowers
 router.get('/', async (req, res, next) => {
   try {
-    // Attempt to extract user_id from query or authorization header
-    let userId = req.query.user_id as string | undefined;
-
+    // Prioritize User ID from Authorization header for security
+    let userId: string | undefined;
+    
     if (req.headers.authorization) {
       const token = req.headers.authorization.replace('Bearer ', '');
       const { data: authData } = await supabase.auth.getUser(token);
-      if (authData?.user?.id) {
-        userId = authData.user.id;
-      }
+      userId = authData?.user?.id;
+    }
+
+    // Fallback to query param if not authenticated via header (useful for testing/admin)
+    if (!userId) {
+      userId = req.query.user_id as string | undefined;
     }
 
     if (!userId) {
@@ -27,7 +30,7 @@ router.get('/', async (req, res, next) => {
     const { data, error } = await supabase
       .from('flowers')
       .select('*')
-      .eq('recipient_id', userId)
+      .eq('user_id', userId) // Map query to DB's user_id column
       .order('sent_at', { ascending: false });
 
     if (error) {

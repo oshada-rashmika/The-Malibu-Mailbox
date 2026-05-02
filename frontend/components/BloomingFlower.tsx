@@ -43,7 +43,7 @@ export default function BloomingFlower({ flowerType, meaning, colorHex }: Bloomi
       <svg viewBox="0 0 100 150" className="w-full h-full overflow-visible drop-shadow-md">
         {/* Stem (drawn growing upwards) */}
         <motion.path
-          d="M 50 150 Q 40 100 50 80"
+          d="M 50 150 Q 40 90 50 40"
           fill="transparent"
           stroke="#4ade80"
           strokeWidth="4"
@@ -73,17 +73,17 @@ export default function BloomingFlower({ flowerType, meaning, colorHex }: Bloomi
             stiffness: 100, 
             damping: 12 
           }}
-          style={{ originX: '50px', originY: '80px' }}
+          style={{ originX: '50px', originY: '40px' }}
         >
           {/* Dynamic Color Petals */}
-          <circle cx="50" cy="65" r="14" fill={colorHex} className="opacity-90" />
-          <circle cx="36" cy="78" r="14" fill={colorHex} className="opacity-90" />
-          <circle cx="64" cy="78" r="14" fill={colorHex} className="opacity-90" />
-          <circle cx="42" cy="94" r="14" fill={colorHex} className="opacity-90" />
-          <circle cx="58" cy="94" r="14" fill={colorHex} className="opacity-90" />
+          <circle cx="50" cy="25" r="14" fill={colorHex} className="opacity-90" />
+          <circle cx="36" cy="38" r="14" fill={colorHex} className="opacity-90" />
+          <circle cx="64" cy="38" r="14" fill={colorHex} className="opacity-90" />
+          <circle cx="42" cy="54" r="14" fill={colorHex} className="opacity-90" />
+          <circle cx="58" cy="54" r="14" fill={colorHex} className="opacity-90" />
           
           {/* Flower Center */}
-          <circle cx="50" cy="81" r="8" fill="#fcd34d" />
+          <circle cx="50" cy="41" r="8" fill="#fcd34d" />
         </motion.g>
       </svg>
     </div>
