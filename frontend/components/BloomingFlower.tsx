@@ -129,14 +129,24 @@ export default function BloomingFlower({ flowerType, meaning, colorHex }: Bloomi
           transition={{ duration: 1.2, ease: 'easeOut' }}
         />
         
-        {/* Leaf */}
+        {/* Leaf 1 (Right, Bottom) */}
         <motion.path
-          d="M 50 120 Q 70 100 80 110 Q 60 130 50 120"
+          d="M 50 85 Q 70 65 80 75 Q 60 95 50 85"
           fill="#4ade80"
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ delay: 0.8, duration: 0.8, type: 'spring' }}
           style={{ originX: 0, originY: 1 }}
+        />
+
+        {/* Leaf 2 (Left, Top) */}
+        <motion.path
+          d="M 50 70 Q 30 50 20 60 Q 40 80 50 70"
+          fill="#4ade80"
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 0.7, opacity: 1 }}
+          transition={{ delay: 1, duration: 0.8, type: 'spring' }}
+          style={{ originX: 1, originY: 1 }}
         />
 
         {/* Blossom Group */}
