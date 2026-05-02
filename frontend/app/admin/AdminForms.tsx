@@ -13,7 +13,7 @@ const ReactQuill = dynamic(() => import('react-quill-new'), {
 });
 
 export default function AdminForms() {
-  const [activeTab, setActiveTab] = useState<'letters' | 'vouchers'>('letters');
+  const [activeTab, setActiveTab] = useState<'letters' | 'vouchers' | 'flowers'>('letters');
 
   // Letter State
   const [letterTitle, setLetterTitle] = useState('');
@@ -28,6 +28,13 @@ export default function AdminForms() {
   const [voucherCode, setVoucherCode] = useState('');
   const [voucherUserId, setVoucherUserId] = useState('');
   const [voucherStatus, setVoucherStatus] = useState({ loading: false, message: '', isError: false });
+
+  // Flower State
+  const [flowerType, setFlowerType] = useState('Rose');
+  const [flowerMeaning, setFlowerMeaning] = useState('');
+  const [flowerColor, setFlowerColor] = useState('#e11d48');
+  const [flowerUserId, setFlowerUserId] = useState('');
+  const [flowerStatus, setFlowerStatus] = useState({ loading: false, message: '', isError: false });
 
   const handleLetterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,6 +105,38 @@ export default function AdminForms() {
     }
   };
 
+  const handleFlowerSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!flowerType || !flowerMeaning || !flowerColor || !flowerUserId) {
+      setFlowerStatus({ loading: false, message: 'All flower fields and recipient ID are required.', isError: true });
+      return;
+    }
+    setFlowerStatus({ loading: true, message: 'Minting seed...', isError: false });
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/admin/flowers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          flower_type: flowerType,
+          meaning: flowerMeaning,
+          color_hex: flowerColor,
+          recipient_id: flowerUserId.trim()
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Failed to mint flower');
+      }
+      setFlowerStatus({ loading: false, message: data.message, isError: false });
+      setFlowerMeaning('');
+      // flowerType and color remain to make batch adding easier
+      
+      setTimeout(() => setFlowerStatus({ loading: false, message: '', isError: false }), 3000);
+    } catch (err: any) {
+      setFlowerStatus({ loading: false, message: err.message, isError: true });
+    }
+  };
+
   return (
     <div className="w-full">
       {/* Module Switcher using the Noir palette */}
@@ -117,6 +156,14 @@ export default function AdminForms() {
           }`}
         >
           Voucher Mint
+        </button>
+        <button
+          onClick={() => setActiveTab('flowers')}
+          className={`flex-1 sm:flex-none px-8 py-4 rounded-full text-xs font-bold uppercase tracking-widest transition-all z-10 ${
+            activeTab === 'flowers' ? 'bg-rose-gold text-deep-velvet' : 'text-silk-white/60 hover:text-silk-white'
+          }`}
+        >
+          Florist Boutique
         </button>
       </div>
 
@@ -276,6 +323,93 @@ export default function AdminForms() {
           </div>
         </form>
       )}
-    </div>
+      {/* ----------- FLOWER FORM ----------- */}
+      {activeTab === 'flowers' && (
+        <form onSubmit={handleFlowerSubmit} className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="flex items-center mb-6">
+            <div className="w-12 h-12 rounded-full bg-rose-gold/10 border border-rose-gold/20 flex items-center justify-center mr-4">
+              <span className="text-rose-gold font-serif text-xl">❀</span>
+            </div>
+            <h2 className="text-2xl font-serif text-silk-white">Mint a Flower</h2>
+          </div>
+
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="block text-xs font-bold uppercase tracking-[0.2em] text-rose-gold/70 ml-1">Flower Type *</label>
+                <select
+                  value={flowerType}
+                  onChange={(e) => setFlowerType(e.target.value)}
+                  className="w-full px-5 py-3 bg-[#0a0a0a]/50 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-gold/50 focus:border-rose-gold transition-colors text-silk-white"
+                >
+                  <option value="Rose">Rose</option>
+                  <option value="Tulip">Tulip</option>
+                  <option value="Lily">Lily</option>
+                  <option value="Sunflower">Sunflower</option>
+                  <option value="Orchid">Orchid</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="block text-xs font-bold uppercase tracking-[0.2em] text-rose-gold/70 ml-1">Color Palette (Hex) *</label>
+                <div className="flex bg-[#0a0a0a]/50 border border-white/10 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-rose-gold/50 focus-within:border-rose-gold transition-colors h-[50px]">
+                  <input
+                    type="color"
+                    value={flowerColor}
+                    onChange={(e) => setFlowerColor(e.target.value)}
+                    className="h-full w-14 border-0 p-0 m-0 bg-transparent cursor-pointer"
+                  />
+                  <input 
+                    type="text"
+                    value={flowerColor}
+                    onChange={(e) => setFlowerColor(e.target.value)}
+                    placeholder="#FFFFFF"
+                    className="w-full px-4 py-3 bg-transparent border-0 focus:outline-none text-silk-white placeholder:text-silk-white/20 font-mono tracking-widest text-sm uppercase"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-xs font-bold uppercase tracking-[0.2em] text-rose-gold/70 ml-1">Meaning (Tooltip) *</label>
+              <textarea
+                value={flowerMeaning}
+                onChange={(e) => setFlowerMeaning(e.target.value)}
+                placeholder="e.g. Perfect Happiness"
+                rows={3}
+                className="w-full px-5 py-3 bg-[#0a0a0a]/50 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-gold/50 focus:border-rose-gold transition-colors text-silk-white placeholder:text-silk-white/20 resize-none font-serif italic"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-xs font-bold uppercase tracking-[0.2em] text-rose-gold/70 ml-1">Recipient User ID *</label>
+              <input
+                type="text"
+                value={flowerUserId}
+                onChange={(e) => setFlowerUserId(e.target.value)}
+                placeholder="UUID of the recipient..."
+                required
+                className="w-full px-5 py-3 bg-[#0a0a0a]/50 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-gold/50 focus:border-rose-gold transition-colors text-silk-white placeholder:text-silk-white/20"
+              />
+            </div>
+
+            <div className="pt-4 flex items-center justify-between">
+              <div>
+                {flowerStatus.message && (
+                  <span className={`text-sm font-sans px-4 py-2 rounded-lg ${flowerStatus.isError ? 'bg-red-500/20 text-red-300' : 'bg-rose-gold/20 text-rose-gold'}`}>
+                    {flowerStatus.message}
+                  </span>
+                )}
+              </div>
+              <button
+                type="submit"
+                disabled={flowerStatus.loading}
+                className="px-8 py-4 bg-rose-gold text-deep-velvet rounded-xl font-bold tracking-[0.2em] uppercase text-xs shadow-lg shadow-rose-gold/10 hover:scale-[1.02] hover:bg-white transition-all duration-300 disabled:opacity-50 disabled:scale-100"
+              >
+                {flowerStatus.loading ? 'Minting...' : 'Mint Flower'}
+              </button>
+            </div>
+          </div>
+        </form>
+      )}    </div>
   );
 }

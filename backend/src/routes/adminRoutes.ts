@@ -111,4 +111,47 @@ router.post('/vouchers', async (req, res, next) => {
   }
 });
 
+// POST /api/admin/flowers
+router.post('/flowers', async (req, res, next) => {
+  try {
+    const { flower_type, meaning, color_hex, recipient_id } = req.body;
+    const cleanRecipientId = recipient_id?.trim();
+
+    if (!flower_type || !meaning || !color_hex || !cleanRecipientId) {
+      return res.status(400).json({
+        success: false,
+        message: 'flower_type, meaning, color_hex, and recipient_id are required.',
+      });
+    }
+
+    const { data, error } = await supabase
+      .from('flowers')
+      .insert([{
+        flower_type,
+        meaning,
+        color_hex,
+        user_id: cleanRecipientId, // Map frontend's recipient_id to DB's user_id
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('[Admin] Error minting flower:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to mint the flower.',
+        error: error.message,
+      });
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Flower successfully minted! 🌸',
+      data,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;

@@ -1,9 +1,7 @@
-// In production (Vercel monorepo), the backend is routed through the /_/backend prefix.
-// In development, we use the local 5000 port.
+// In production, the API_BASE_URL should be set via NEXT_PUBLIC_BACKEND_URL environment variable.
+// If not set, we default to the /_/backend prefix used in the Vercel monorepo config.
 const isProd = process.env.NODE_ENV === 'production';
-const vercelBackendPrefix = '/_/backend';
 
-export const API_BASE_URL = isProd 
-  ? (process.env.NEXT_PUBLIC_BACKEND_URL || vercelBackendPrefix)
-  : (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000');
+export const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 
+  (isProd ? '/_/backend' : 'http://localhost:5000');
 
