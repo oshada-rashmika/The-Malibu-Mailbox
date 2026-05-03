@@ -4,7 +4,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Flower } from 'lucide-react';
+import { Flower, BookHeart } from 'lucide-react';
 
 const navItems = [
   {
@@ -15,6 +15,11 @@ const navItems = [
         <path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/>
       </svg>
     ),
+  },
+  {
+    name: 'Notebook',
+    href: '/dashboard/notebook',
+    icon: <BookHeart size={20} strokeWidth={2} />,
   },
   {
     name: 'Home',
