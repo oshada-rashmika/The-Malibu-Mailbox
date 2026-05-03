@@ -101,22 +101,20 @@ export default function BoutiqueClient({ userId }: { userId: string }) {
           <div className="relative flex justify-center items-end h-[300px] w-[300px] sm:w-[400px] mb-8">
             
             {/* The Bouqet grouping */}
-            <div className="absolute bottom-16 flex justify-center items-end w-full space-x-[-40px]">
+            <div className="absolute bottom-16 flex justify-center items-end w-full">
               {flowers.map((flower, i) => {
                 // A slight stagger/rotation math to make it look organic
                 const middleIndex = (flowers.length - 1) / 2;
                 const positionOffset = i - middleIndex;
                 
-                // Adjust rotation dynamically. More flowers = slightly tighter spread to fit them, or wider?
-                // Let's constrain the max rotation so it doesn't go completely horizontal.
-                const spreadConstrain = Math.max(1, flowers.length / 5);
-                const rotate = (positionOffset * 15) / spreadConstrain; 
+                // Adjust rotation dynamically to fan them out beautifully
+                const rotate = positionOffset * 22; 
                 
                 const translateY = Math.abs(positionOffset) * 10; // dip the outer flowers slightly
                 
                 // If there are many flowers, make the stems longer dynamically so they fan out beautifully and don't overlap too much
-                const overlapFactor = Math.max(0, flowers.length - 4);
-                const stemAddedHeight = Math.abs(positionOffset) * 15 + overlapFactor * 10;
+                const overlapFactor = Math.max(0, flowers.length - 3);
+                const stemAddedHeight = Math.abs(positionOffset) * 20 + overlapFactor * 15;
 
                 return (
                   <motion.div
@@ -124,7 +122,13 @@ export default function BoutiqueClient({ userId }: { userId: string }) {
                     initial={{ opacity: 0, y: 50 }}
                     animate={{ opacity: 1, y: translateY }}
                     transition={{ delay: i * 0.15, type: 'spring' }}
-                    style={{ zIndex: flowers.length - Math.abs(positionOffset) }}
+                    style={{ 
+                      zIndex: flowers.length - Math.abs(positionOffset),
+                      position: 'absolute',
+                      bottom: 0,
+                      // Slight horizontal shift just so perfect overlaps don't look completely rigid
+                      x: positionOffset * 15 
+                    }}
                     className="origin-bottom transform"
                   >
                     <div style={{ transform: `rotate(${rotate}deg)`, transformOrigin: 'bottom center' }}>
