@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { API_BASE_URL } from '../utils/api';
 import BloomingFlower from './BloomingFlower';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Flower {
   id: string;
@@ -17,6 +17,7 @@ interface Flower {
 export default function BoutiqueClient({ userId }: { userId: string }) {
   const [flowers, setFlowers] = useState<Flower[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedFlower, setSelectedFlower] = useState<Flower | null>(null);
 
   useEffect(() => {
     fetchFlowers();
@@ -122,6 +123,8 @@ export default function BoutiqueClient({ userId }: { userId: string }) {
                         flowerType={flower.flower_type}
                         meaning={flower.meaning}
                         colorHex={flower.color_hex}
+                        onSelect={() => setSelectedFlower(flower)}
+                        isSelected={selectedFlower?.id === flower.id}
                       />
                     </div>
                   </motion.div>
@@ -138,6 +141,48 @@ export default function BoutiqueClient({ userId }: { userId: string }) {
           </div>
         )}
       </div>
+
+      {/* Singleton Meaning Overlay */}
+      <AnimatePresence mode="wait">
+        {selectedFlower && (
+          <div className="fixed inset-0 z-50 pointer-events-none">
+            {/* Full-screen Dismissal Area */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedFlower(null)}
+              className="absolute inset-0 bg-black/5 backdrop-blur-sm pointer-events-auto"
+            />
+            
+            {/* The Meaning Card */}
+            <motion.div
+              key={selectedFlower.id}
+              initial={{ opacity: 0, scale: 0.9, x: "-50%", y: "-45%" }}
+              animate={{ opacity: 1, scale: 1, x: "-50%", y: "-50%" }}
+              exit={{ opacity: 0, scale: 0.9, x: "-50%", y: "-45%" }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              className="absolute top-1/2 left-1/2 w-[90%] max-w-sm md:max-w-md p-10 rounded-[2.5rem] bg-white/10 backdrop-blur-2xl border border-white/20 shadow-[0_20px_50px_rgba(224,191,184,0.3)] text-center pointer-events-auto"
+            >
+              <h3 className="text-4xl md:text-5xl font-serif text-deep-velvet mb-4 capitalize">
+                {selectedFlower.flower_type}
+              </h3>
+              <div className="h-px w-16 bg-gradient-to-r from-transparent via-rose-gold to-transparent mx-auto mb-8" />
+              <p className="text-xl font-sans text-deep-velvet/80 italic leading-relaxed">
+                "{selectedFlower.meaning}"
+              </p>
+              
+              {/* Subtle close button for accessibility */}
+              <button 
+                onClick={() => setSelectedFlower(null)}
+                className="mt-8 text-[10px] uppercase tracking-[0.2em] text-deep-velvet/40 hover:text-deep-velvet/80 transition-colors"
+              >
+                Close
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
