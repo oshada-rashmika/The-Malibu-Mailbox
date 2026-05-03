@@ -17,9 +17,10 @@ interface PageProps {
   children: React.ReactNode;
   number?: number;
   isCover?: boolean;
+  bgElement?: React.ReactNode;
 }
 
-const Page = forwardRef<HTMLDivElement, PageProps>(({ children, number, isCover }, ref) => {
+const Page = forwardRef<HTMLDivElement, PageProps>(({ children, number, isCover, bgElement }, ref) => {
   return (
     <div className="page" ref={ref} data-density={isCover ? 'hard' : 'soft'}>
       <div className={`w-full h-full relative shadow-inner overflow-hidden ${
@@ -27,24 +28,21 @@ const Page = forwardRef<HTMLDivElement, PageProps>(({ children, number, isCover 
           ? 'bg-gradient-to-br from-[#FF69B4] via-[#FF1493] to-[#C71585] border-l-8 border-black/20' 
           : 'bg-[#FFFDD0] notebook-lines'
       }`}>
-        {/* Leather texture for cover */}
-        {isCover && (
+        {/* Decorative elements outside padded content */}
+        {isCover ? (
           <>
             <div className="absolute inset-0 opacity-20 pointer-events-none mix-blend-overlay bg-[url('https://www.transparenttextures.com/patterns/leather.png')]" />
-            {/* Barbie decorative image at the bottom */}
             <img 
               src="/barbie.png" 
               alt="" 
-              className="absolute bottom-0 left-0 w-full opacity-30 pointer-events-none object-contain translate-y-4"
+              className="absolute bottom-0 left-0 w-full opacity-30 pointer-events-none object-contain translate-y-2"
             />
           </>
-        )}
-        
-        {/* Paper texture for inner pages */}
-        {!isCover && (
+        ) : (
           <>
             <div className="absolute inset-0 opacity-50 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')]" />
             <div className="absolute left-10 top-0 bottom-0 w-[2px] bg-red-400/30" />
+            {bgElement}
           </>
         )}
 
@@ -143,13 +141,21 @@ export default function HeartbeatNotebook({
         </Page>
 
         {/* Introduction Page */}
-        <Page>
-          <div className="text-center space-y-6 px-6">
-            <h2 className="text-2xl font-serif text-deep-velvet/60 italic">Our Shared Whispers</h2>
-            <p className="text-2xl text-deep-velvet/80 leading-relaxed font-cursive">
-              "Every word here is a heartbeat captured in time. A sanctuary for our thoughts, our dreams, and our infinite love."
-            </p>
-            <div className="text-pink-400 text-3xl animate-pulse">♥</div>
+        <Page bgElement={
+          <img 
+            src="/us.png" 
+            alt="" 
+            className="absolute bottom-0 left-0 w-full opacity-25 pointer-events-none object-contain translate-y-1"
+          />
+        }>
+          <div className="w-full h-full flex flex-col justify-center relative group py-10 px-8">
+            <div className="text-center space-y-6 relative z-10">
+              <h2 className="text-2xl font-serif text-deep-velvet/60 italic">Our Shared Whispers</h2>
+              <p className="text-2xl text-deep-velvet/80 leading-relaxed font-cursive">
+                "Every word here is a heartbeat captured in time. A sanctuary for our thoughts, our dreams, and our infinite love."
+              </p>
+              <div className="text-pink-400 text-3xl animate-pulse">♥</div>
+            </div>
           </div>
         </Page>
 
