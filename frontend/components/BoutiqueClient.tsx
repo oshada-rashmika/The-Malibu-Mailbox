@@ -106,8 +106,17 @@ export default function BoutiqueClient({ userId }: { userId: string }) {
                 // A slight stagger/rotation math to make it look organic
                 const middleIndex = (flowers.length - 1) / 2;
                 const positionOffset = i - middleIndex;
-                const rotate = positionOffset * 15; // fan out
+                
+                // Adjust rotation dynamically. More flowers = slightly tighter spread to fit them, or wider?
+                // Let's constrain the max rotation so it doesn't go completely horizontal.
+                const spreadConstrain = Math.max(1, flowers.length / 5);
+                const rotate = (positionOffset * 15) / spreadConstrain; 
+                
                 const translateY = Math.abs(positionOffset) * 10; // dip the outer flowers slightly
+                
+                // If there are many flowers, make the stems longer dynamically so they fan out beautifully and don't overlap too much
+                const overlapFactor = Math.max(0, flowers.length - 4);
+                const stemAddedHeight = Math.abs(positionOffset) * 15 + overlapFactor * 10;
 
                 return (
                   <motion.div
@@ -118,11 +127,12 @@ export default function BoutiqueClient({ userId }: { userId: string }) {
                     style={{ zIndex: flowers.length - Math.abs(positionOffset) }}
                     className="origin-bottom transform"
                   >
-                    <div style={{ transform: `rotate(${rotate}deg)` }}>
+                    <div style={{ transform: `rotate(${rotate}deg)`, transformOrigin: 'bottom center' }}>
                       <BloomingFlower
                         flowerType={flower.flower_type}
                         meaning={flower.meaning}
                         colorHex={flower.color_hex}
+                        stemAddedHeight={stemAddedHeight}
                         onSelect={() => setSelectedFlower(flower)}
                         isSelected={selectedFlower?.id === flower.id}
                       />
@@ -133,7 +143,7 @@ export default function BoutiqueClient({ userId }: { userId: string }) {
             </div>
 
             {/* The Glassmorphic Vase */}
-            <div className="relative z-10 w-48 h-32 rounded-b-[40px] rounded-t-[10px] bg-white/20 backdrop-blur-xl border border-white/50 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] flex flex-col justify-end overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-tr before:from-white/40 before:to-transparent before:rounded-b-[40px]">
+            <div className="relative z-50 w-48 h-32 rounded-b-[40px] rounded-t-[10px] bg-white/20 backdrop-blur-md border border-white/50 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] flex flex-col justify-end overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-tr before:from-white/40 before:to-transparent before:rounded-b-[40px]">
               {/* Vase Water/Accent bottom */}
               <div className="h-10 w-full bg-cyan-100/10 backdrop-blur-sm border-t border-white/20" />
             </div>
