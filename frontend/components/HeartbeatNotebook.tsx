@@ -25,7 +25,7 @@ const Page = forwardRef<HTMLDivElement, PageProps>(({ children, number, isCover 
       <div className={`w-full h-full relative shadow-inner overflow-hidden ${
         isCover 
           ? 'bg-gradient-to-br from-[#FF69B4] via-[#FF1493] to-[#C71585] border-l-8 border-black/20' 
-          : 'bg-[#FFFDD0] bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px]'
+          : 'bg-[#FFFDD0] notebook-lines'
       }`}>
         {/* Leather texture for cover */}
         {isCover && (
@@ -36,7 +36,7 @@ const Page = forwardRef<HTMLDivElement, PageProps>(({ children, number, isCover 
         {!isCover && (
           <>
             <div className="absolute inset-0 opacity-50 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')]" />
-            <div className="absolute left-10 top-0 bottom-0 w-px bg-red-200/50" />
+            <div className="absolute left-10 top-0 bottom-0 w-[2px] bg-red-400/30" />
           </>
         )}
 
@@ -51,23 +51,25 @@ const Page = forwardRef<HTMLDivElement, PageProps>(({ children, number, isCover 
 Page.displayName = 'Page';
 
 const LipIcon = ({ scatterIndex }: { scatterIndex: number }) => {
-  // Scatter logic
-  const x = (scatterIndex % 5) * 15 - 30; // Random-ish horizontal
-  const y = Math.floor(scatterIndex / 5) * 15 - 20; // Random-ish vertical
-  const rotate = (scatterIndex * 45) % 360;
+  // Much more aggressive scatter logic to prevent overlap
+  const x = (scatterIndex * 47) % 180 - 90; // Spread wide
+  const y = (scatterIndex * 31) % 50 - 25; // Spread vertically
+  const rotate = (scatterIndex * 60) % 360;
 
   return (
     <motion.div
-      initial={{ scale: 0, opacity: 0, rotate: rotate - 20 }}
-      animate={{ scale: 1, opacity: 1, rotate: rotate }}
-      className="absolute pointer-events-none"
-      style={{ left: `calc(50% + ${x}px)`, top: `calc(70% + ${y}px)` }}
-      transition={{ type: 'spring', stiffness: 260, damping: 20, delay: scatterIndex * 0.1 }}
+      initial={{ scale: 0, opacity: 0, rotate: rotate - 45 }}
+      animate={{ scale: 1.1, opacity: 1, rotate: rotate }}
+      className="absolute pointer-events-none text-3xl select-none"
+      style={{ left: `calc(50% + ${x}px)`, top: `calc(50% + ${y}px)` }}
+      transition={{ 
+        type: 'spring', 
+        stiffness: 400, 
+        damping: 15, 
+        delay: scatterIndex * 0.05 
+      }}
     >
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-sm">
-        <path d="M4 14C4 14 6 12 8 12C10 12 11 13 12 13C13 13 14 12 16 12C18 12 20 14 20 14C20 14 19 18 12 18C5 18 4 14 4 14Z" fill="#FF69B4" />
-        <path d="M12 13C11 13 10 12 8 12C6 12 4 14 4 14C4 14 5 10 8 9C10 8.5 11 9.5 12 9.5C13 9.5 14 8.5 16 9C19 10 20 14 20 14C20 14 18 12 16 12C14 12 13 13 12 13Z" fill="#FF69B4" />
-      </svg>
+      💋
     </motion.div>
   );
 };
@@ -81,8 +83,13 @@ export default function HeartbeatNotebook({
   onKiss: (id: string) => void,
   currentUserId: string
 }) {
+  const [mounted, setMounted] = React.useState(false);
   const flipBookRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const playFlipSound = () => {
     if (audioRef.current) {
@@ -91,11 +98,7 @@ export default function HeartbeatNotebook({
     }
   };
 
-  // Group entries into pairs for pages
-  const pairedEntries: NotebookEntry[][] = [];
-  for (let i = 0; i < entries.length; i += 2) {
-    pairedEntries.push(entries.slice(i, i + 2));
-  }
+  if (!mounted) return null;
 
   return (
     <div className="flex flex-col items-center justify-center w-full max-w-4xl mx-auto perspective-[2000px]">
@@ -103,6 +106,7 @@ export default function HeartbeatNotebook({
       
       {/* @ts-ignore */}
       <HTMLFlipBook
+        key={entries.length}
         width={400}
         height={550}
         size="stretch"
@@ -123,7 +127,7 @@ export default function HeartbeatNotebook({
             <h1 className="text-4xl font-serif text-white mb-2 drop-shadow-lg tracking-tighter">
               Heartbeat
             </h1>
-            <p className="text-rose-gold font-handwriting text-2xl drop-shadow-md">
+            <p className="text-rose-gold font-cursive text-4xl drop-shadow-md">
               Notebook
             </p>
             <div className="mt-8 w-12 h-px bg-white/40 mx-auto" />
@@ -141,43 +145,46 @@ export default function HeartbeatNotebook({
           </div>
         </Page>
 
-        {/* Content Pages */}
-        {pairedEntries.map((pair, pageIdx) => (
-          <Page key={pageIdx}>
-            <div className="w-full h-full flex flex-col justify-start space-y-12">
-              {pair.map((entry) => (
-                <div key={entry.id} className="relative p-6 border-b border-deep-velvet/5 last:border-0 group">
-                  <p className="text-xl font-handwriting text-deep-velvet/90 leading-loose mb-6">
-                    {entry.content}
-                  </p>
-                  
-                  {/* Kiss Reactions */}
-                  <div className="relative h-12 w-full">
-                    {[...Array(entry.kisses || 0)].map((_, i) => (
-                      <LipIcon key={i} scatterIndex={i} />
-                    ))}
-                  </div>
+        {/* Content Pages - One entry per page */}
+        {entries.map((entry) => (
+          <Page key={entry.id}>
+            <div className="w-full h-full flex flex-col justify-center relative group py-16 px-12">
+              <p 
+                className="text-3xl text-deep-velvet/90 leading-[32px] mb-6 text-center font-cursive"
+              >
+                {entry.content}
+              </p>
+              
+              {/* Kiss Reactions Container */}
+              <div className="relative h-24 w-full mt-4">
+                {[...Array(entry.kisses || 0)].map((_, i) => (
+                  <LipIcon key={i} scatterIndex={i} />
+                ))}
+              </div>
 
-                  <div className="flex items-center justify-between mt-4">
-                    <span className="text-[10px] uppercase tracking-widest text-deep-velvet/30 font-bold">
-                      {new Date(entry.created_at).toLocaleDateString()}
-                    </span>
-                    
-                    {/* Give a Kiss Button (only for entries not sent by current user) */}
-                    {entry.sender_id !== currentUserId && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onKiss(entry.id);
-                        }}
-                        className="text-[10px] uppercase tracking-tighter text-pink-400 hover:text-pink-600 transition-colors flex items-center gap-1 font-bold"
-                      >
-                        Give a Kiss 💋
-                      </button>
-                    )}
-                  </div>
+              <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between">
+                <div className="flex flex-col">
+                  <span className="text-[10px] uppercase tracking-widest text-deep-velvet/50 font-bold mb-0.5">
+                    {entry.sender_id === '4245ce5a-0f2a-4716-a2ff-d3993d5a5700' ? 'Oshada Rashmika' : 'Senuri Rukshani'}
+                  </span>
+                  <span className="text-[9px] uppercase tracking-widest text-deep-velvet/30 font-bold">
+                    {new Date(entry.created_at).toLocaleDateString()}
+                  </span>
                 </div>
-              ))}
+                
+                {/* Give a Kiss Button */}
+                {entry.sender_id !== currentUserId && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onKiss(entry.id);
+                    }}
+                    className="text-[10px] uppercase tracking-tighter text-pink-500 hover:text-pink-700 transition-colors flex items-center gap-1 font-bold bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm"
+                  >
+                    Give a Kiss 💋
+                  </button>
+                )}
+              </div>
             </div>
           </Page>
         ))}
