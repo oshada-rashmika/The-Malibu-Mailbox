@@ -531,9 +531,9 @@ export default function AdminForms() {
                         )}
                         <button
                           onClick={() => handleKiss(note.id)}
-                          className="px-3 py-1 bg-rose-gold/10 border border-rose-gold/20 text-rose-gold rounded-full hover:bg-rose-gold hover:text-deep-velvet transition-all opacity-0 group-hover:opacity-100"
+                          className="px-4 py-1.5 bg-rose-gold/10 border border-rose-gold/30 text-rose-gold rounded-full hover:bg-rose-gold hover:text-deep-velvet transition-all font-bold text-[9px] uppercase tracking-tighter shadow-sm active:scale-95"
                         >
-                          Send Kiss
+                          Send Kiss 💋
                         </button>
                       </div>
                     </div>
