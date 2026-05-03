@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Playfair_Display } from "next/font/google";
+import { Inter, Playfair_Display, Dancing_Script } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({
@@ -9,6 +9,11 @@ const inter = Inter({
 
 const playfair = Playfair_Display({
   variable: "--font-serif",
+  subsets: ["latin"],
+});
+
+const dancing = Dancing_Script({
+  variable: "--font-handwriting",
   subsets: ["latin"],
 });
 
@@ -25,7 +30,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${playfair.variable} h-full antialiased`}
+      className={`${inter.variable} ${playfair.variable} ${dancing.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans bg-silk-white bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white to-blush-pink/20 selection:bg-rose-gold/30 selection:text-deep-velvet">
         {children}

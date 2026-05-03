@@ -16,6 +16,7 @@ export default {
       fontFamily: {
         sans: ['var(--font-sans)', 'sans-serif'],
         serif: ['var(--font-serif)', 'serif'],
+        handwriting: ['var(--font-handwriting)', 'cursive'],
       },
     },
   },
