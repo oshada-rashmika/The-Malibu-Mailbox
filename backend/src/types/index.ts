@@ -23,3 +23,12 @@ export interface Flower {
   color_hex: string;
   user_id: string; // Refers to the auth.users(id) in the DB
 }
+
+export interface NotebookEntry {
+  id: string;
+  created_at: string;
+  sender_id: string;
+  recipient_id: string;
+  content: string;
+  kisses: number;
+}
