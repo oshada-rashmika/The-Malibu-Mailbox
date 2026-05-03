@@ -7,6 +7,7 @@ export interface BloomingFlowerProps {
   flowerType: string;
   meaning: string;
   colorHex: string;
+  stemAddedHeight?: number;
   onSelect?: () => void;
   isSelected?: boolean;
 }
@@ -15,6 +16,7 @@ export default function BloomingFlower({
   flowerType, 
   meaning, 
   colorHex,
+  stemAddedHeight = 0,
   onSelect,
   isSelected 
 }: BloomingFlowerProps) {
@@ -97,16 +99,17 @@ export default function BloomingFlower({
 
   return (
     <div 
-      className={`relative flex flex-col items-center justify-end w-32 h-48 cursor-pointer select-none transition-transform duration-500 ${isSelected ? 'scale-110' : 'hover:scale-105'}`}
+      className={`relative flex flex-col items-center justify-end w-32 cursor-pointer select-none transition-transform duration-500 ${isSelected ? 'scale-110' : 'hover:scale-105'}`}
+      style={{ height: `${(150 + stemAddedHeight) * (192 / 150)}px` }}
       onClick={onSelect}
     >
 
 
       {/* SVG Canvas for the Flower */}
-      <svg viewBox="0 0 100 150" className="w-full h-full overflow-visible drop-shadow-md">
+      <svg viewBox={`0 0 100 ${150 + stemAddedHeight}`} className="w-full h-full overflow-visible drop-shadow-md">
         {/* Stem (drawn growing upwards) */}
         <motion.path
-          d="M 50 150 Q 40 90 50 40"
+          d={`M 50 ${150 + stemAddedHeight} Q 40 ${90 + stemAddedHeight / 2} 50 40`}
           fill="transparent"
           stroke="#4ade80"
           strokeWidth="4"
@@ -118,7 +121,7 @@ export default function BloomingFlower({
         
         {/* Leaf 1 (Right, Bottom) */}
         <motion.path
-          d="M 50 85 Q 70 65 80 75 Q 60 95 50 85"
+          d={`M 50 ${85 + stemAddedHeight / 3} Q 70 ${65 + stemAddedHeight / 3} 80 ${75 + stemAddedHeight / 3} Q 60 ${95 + stemAddedHeight / 3} 50 ${85 + stemAddedHeight / 3}`}
           fill="#4ade80"
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -128,7 +131,7 @@ export default function BloomingFlower({
 
         {/* Leaf 2 (Left, Top) */}
         <motion.path
-          d="M 50 70 Q 30 50 20 60 Q 40 80 50 70"
+          d={`M 50 ${70 + stemAddedHeight / 4} Q 30 ${50 + stemAddedHeight / 4} 20 ${60 + stemAddedHeight / 4} Q 40 ${80 + stemAddedHeight / 4} 50 ${70 + stemAddedHeight / 4}`}
           fill="#4ade80"
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 0.7, opacity: 1 }}
@@ -153,4 +156,4 @@ export default function BloomingFlower({
       </svg>
     </div>
   );
-}
+}
