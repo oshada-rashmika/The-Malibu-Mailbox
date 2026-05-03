@@ -20,37 +20,70 @@ export default function BoutiqueClient({ userId }: { userId: string }) {
   const [selectedFlower, setSelectedFlower] = useState<Flower | null>(null);
 
   useEffect(() => {
-    fetchFlowers();
+    const controller = new AbortController();
+
+    const load = async () => {
+      try {
+        const url = `${API_BASE_URL}/api/flowers?user_id=${userId}`;
+        console.log(`[Florist] Fetching blooms from: ${url}`);
+
+        const res = await fetch(url, { signal: controller.signal });
+
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          throw new Error(errorData.message || `System error: ${res.status}`);
+        }
+
+        const data = await res.json();
+        if (data.success) {
+          console.log(`[Florist] Found ${data.data?.length || 0} blooms.`);
+          setFlowers(data.data);
+        } else {
+          throw new Error(data.message || 'Failed to arrange blooms.');
+        }
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name === 'AbortError') return;
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        console.error('[Florist] Bouquet error:', message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+
+    return () => controller.abort();
   }, [userId]);
 
-  const fetchFlowers = async () => {
-    try {
-      const url = `${API_BASE_URL}/api/flowers?user_id=${userId}`;
-      console.log(`[Florist] Fetching blooms from: ${url}`);
-      
-      const res = await fetch(url);
-      
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.message || `System error: ${res.status}`);
-      }
+  /**
+   * Computes the fan angle and stem extension for each flower.
+   * All stems pivot from the same bottom-center point (vase mouth).
+   * - Total spread is capped at ±45° so nothing escapes the container.
+   * - Outer flowers get longer stems so their heads don't collide.
+   */
+  const getFlowerLayout = (index: number, total: number) => {
+    const middleIndex = (total - 1) / 2;
+    const positionOffset = index - middleIndex; // negative = left, positive = right
 
-      const data = await res.json();
-      if (data.success) {
-        console.log(`[Florist] Found ${data.data?.length || 0} blooms.`);
-        setFlowers(data.data);
-      } else {
-        throw new Error(data.message || 'Failed to arrange blooms.');
-      }
-    } catch (err: any) {
-      console.error('[Florist] Bouquet error:', err.message);
-    } finally {
-      setLoading(false);
-    }
+    // Fan spread grows with flower count but caps at 90° total (±45°)
+    const totalSpreadDeg = Math.min(90, total * 18);
+    const angle =
+      total === 1
+        ? 0
+        : -totalSpreadDeg / 2 + index * (totalSpreadDeg / (total - 1));
+
+    // Outer flowers grow longer stems — capped at 110px extra to stay elegant
+    const stemAddedHeight = Math.min(Math.abs(positionOffset) * 38, 110);
+
+    // Center flowers are on top visually
+    const zIndex = total + 2 - Math.abs(Math.round(positionOffset));
+
+    return { angle, stemAddedHeight, zIndex };
   };
 
   return (
     <div className="relative z-10 w-full max-w-5xl mx-auto flex flex-col items-center flex-grow h-full">
+      {/* ── Header ── */}
       <header className="w-full mb-12 pt-6 px-4">
         <div className="relative flex flex-col items-start gap-2 md:flex-row md:items-center md:justify-center">
           <Link
@@ -71,12 +104,14 @@ export default function BoutiqueClient({ userId }: { userId: string }) {
         </div>
       </header>
 
-      {/* Main Sandbox for the Bouquet */}
+      {/* ── Bouquet Stage ── */}
       <div className="flex-1 w-full relative flex flex-col items-center justify-end pb-32">
         {loading ? (
           <div className="animate-pulse space-y-4 flex flex-col items-center">
             <div className="w-32 h-32 bg-white/20 rounded-full blur-xl" />
-            <p className="text-deep-velvet/50 text-sm font-serif italic">Arranging your flowers...</p>
+            <p className="text-deep-velvet/50 text-sm font-serif italic">
+              Arranging your flowers...
+            </p>
           </div>
         ) : flowers.length === 0 ? (
           <motion.div
@@ -85,10 +120,12 @@ export default function BoutiqueClient({ userId }: { userId: string }) {
             className="max-w-md text-center p-8 bg-white/30 backdrop-blur-md rounded-3xl border border-white/40 shadow-[0_8px_32px_0_rgba(31,38,135,0.05)] mb-20"
           >
             <p className="text-deep-velvet/70 font-serif italic text-xl mb-4">
-              "Your garden is waiting for its first spark of love..."
+              &ldquo;Your garden is waiting for its first spark of love...&rdquo;
             </p>
             <div className="pt-4 border-t border-deep-velvet/10">
-              <p className="text-[10px] uppercase tracking-widest text-deep-velvet/40 mb-1">Your Recipient ID</p>
+              <p className="text-[10px] uppercase tracking-widest text-deep-velvet/40 mb-1">
+                Your Recipient ID
+              </p>
               <code className="text-[10px] bg-white/40 px-2 py-1 rounded font-mono text-deep-velvet/60 select-all">
                 {userId}
               </code>
@@ -98,69 +135,73 @@ export default function BoutiqueClient({ userId }: { userId: string }) {
             </div>
           </motion.div>
         ) : (
-          <div className="relative flex justify-center items-end h-[300px] w-[300px] sm:w-[400px] mb-8">
-            
-            {/* The Bouqet grouping */}
-            <div className="absolute bottom-16 flex justify-center items-end w-full">
-              {flowers.map((flower, i) => {
-                // A slight stagger/rotation math to make it look organic
-                const middleIndex = (flowers.length - 1) / 2;
-                const positionOffset = i - middleIndex;
-                
-                // Adjust rotation dynamically to fan them out beautifully
-                const rotate = positionOffset * 22; 
-                
-                const translateY = Math.abs(positionOffset) * 10; // dip the outer flowers slightly
-                
-                // If there are many flowers, make the stems longer dynamically so they fan out beautifully and don't overlap too much
-                const overlapFactor = Math.max(0, flowers.length - 3);
-                const stemAddedHeight = Math.abs(positionOffset) * 20 + overlapFactor * 15;
+          /**
+           * BOUQUET CONTAINER
+           * Fixed 340 × 500 px — never grows wider regardless of flower count.
+           * All flowers are absolute-positioned from the same center-bottom
+           * anchor (the vase mouth) and fanned out via CSS rotation only.
+           */
+          <div
+            className="relative mx-auto mb-8"
+            style={{ width: '340px', height: '500px' }}
+          >
+            {flowers.map((flower, i) => {
+              const { angle, stemAddedHeight, zIndex } = getFlowerLayout(
+                i,
+                flowers.length
+              );
 
-                return (
-                  <motion.div
-                    key={flower.id}
-                    initial={{ opacity: 0, y: 50 }}
-                    animate={{ opacity: 1, y: translateY }}
-                    transition={{ delay: i * 0.15, type: 'spring' }}
-                    style={{ 
-                      zIndex: flowers.length - Math.abs(positionOffset),
-                      position: 'absolute',
-                      bottom: 0,
-                      // Slight horizontal shift just so perfect overlaps don't look completely rigid
-                      x: positionOffset * 15 
-                    }}
-                    className="origin-bottom transform"
-                  >
-                    <div style={{ transform: `rotate(${rotate}deg)`, transformOrigin: 'bottom center' }}>
-                      <BloomingFlower
-                        flowerType={flower.flower_type}
-                        meaning={flower.meaning}
-                        colorHex={flower.color_hex}
-                        stemAddedHeight={stemAddedHeight}
-                        onSelect={() => setSelectedFlower(flower)}
-                        isSelected={selectedFlower?.id === flower.id}
-                      />
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
+              return (
+                <motion.div
+                  key={flower.id}
+                  initial={{ opacity: 0, y: 40 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    delay: i * 0.12,
+                    type: 'spring',
+                    stiffness: 70,
+                    damping: 14,
+                  }}
+                  style={{
+                    position: 'absolute',
+                    // Bottom of flower sits flush with the top rim of the vase (h-32 = 128px)
+                    bottom: '128px',
+                    // Center horizontally in the 340px container
+                    left: '50%',
+                    // Shift left by half the flower's own width (w-32 = 128px → 64px)
+                    marginLeft: '-64px',
+                    // Rotate around the stem base so every flower fans from one point
+                    transformOrigin: 'bottom center',
+                    transform: `rotate(${angle}deg)`,
+                    zIndex,
+                  }}
+                >
+                  <BloomingFlower
+                    flowerType={flower.flower_type}
+                    meaning={flower.meaning}
+                    colorHex={flower.color_hex}
+                    stemAddedHeight={stemAddedHeight}
+                    onSelect={() => setSelectedFlower(flower)}
+                    isSelected={selectedFlower?.id === flower.id}
+                  />
+                </motion.div>
+              );
+            })}
 
-            {/* The Glassmorphic Vase */}
-            <div className="relative z-50 w-48 h-32 rounded-b-[40px] rounded-t-[10px] bg-white/20 backdrop-blur-md border border-white/50 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] flex flex-col justify-end overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-tr before:from-white/40 before:to-transparent before:rounded-b-[40px]">
-              {/* Vase Water/Accent bottom */}
+            {/* ── Glassmorphic Vase ── */}
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-50 w-48 h-32 rounded-b-[40px] rounded-t-[10px] bg-white/20 backdrop-blur-md border border-white/50 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] flex flex-col justify-end overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-tr before:from-white/40 before:to-transparent before:rounded-b-[40px]">
+              {/* Water accent */}
               <div className="h-10 w-full bg-cyan-100/10 backdrop-blur-sm border-t border-white/20" />
             </div>
-            
           </div>
         )}
       </div>
 
-      {/* Singleton Meaning Overlay */}
+      {/* ── Flower Meaning Overlay ── */}
       <AnimatePresence mode="wait">
         {selectedFlower && (
           <div className="fixed inset-0 z-50 pointer-events-none">
-            {/* Full-screen Dismissal Area */}
+            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -168,13 +209,13 @@ export default function BoutiqueClient({ userId }: { userId: string }) {
               onClick={() => setSelectedFlower(null)}
               className="absolute inset-0 bg-black/5 backdrop-blur-sm pointer-events-auto"
             />
-            
-            {/* The Meaning Card */}
+
+            {/* Card */}
             <motion.div
               key={selectedFlower.id}
-              initial={{ opacity: 0, scale: 0.9, x: "-50%", y: "-45%" }}
-              animate={{ opacity: 1, scale: 1, x: "-50%", y: "-50%" }}
-              exit={{ opacity: 0, scale: 0.9, x: "-50%", y: "-45%" }}
+              initial={{ opacity: 0, scale: 0.9, x: '-50%', y: '-45%' }}
+              animate={{ opacity: 1, scale: 1, x: '-50%', y: '-50%' }}
+              exit={{ opacity: 0, scale: 0.9, x: '-50%', y: '-45%' }}
               transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
               className="absolute top-1/2 left-1/2 w-[90%] max-w-sm md:max-w-md p-10 rounded-[2.5rem] bg-white/10 backdrop-blur-2xl border border-white/20 shadow-[0_20px_50px_rgba(224,191,184,0.3)] text-center pointer-events-auto"
             >
@@ -183,11 +224,9 @@ export default function BoutiqueClient({ userId }: { userId: string }) {
               </h3>
               <div className="h-px w-16 bg-gradient-to-r from-transparent via-rose-gold to-transparent mx-auto mb-8" />
               <p className="text-xl font-sans text-deep-velvet/80 italic leading-relaxed">
-                "{selectedFlower.meaning}"
+                &ldquo;{selectedFlower.meaning}&rdquo;
               </p>
-              
-              {/* Subtle close button for accessibility */}
-              <button 
+              <button
                 onClick={() => setSelectedFlower(null)}
                 className="mt-8 text-[10px] uppercase tracking-[0.2em] text-deep-velvet/40 hover:text-deep-velvet/80 transition-colors"
               >
