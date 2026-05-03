@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap');
 @import "tailwindcss";
 
 :root {
@@ -19,6 +20,18 @@
   --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
   --shadow-glass-sm: 0 4px 16px 0 rgba(31, 38, 135, 0.2);
   --shadow-glass-border: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+
+  --font-handwriting: "Dancing Script", cursive;
+  --font-cursive: "Dancing Script", cursive;
+}
+
+.notebook-lines {
+  background-image: linear-gradient(#e5e7eb 1px, transparent 1px);
+  background-size: 100% 32px;
+}
+
+.font-cursive {
+  font-family: 'Dancing Script', cursive !important;
 }
 
 @media (prefers-color-scheme: dark) {

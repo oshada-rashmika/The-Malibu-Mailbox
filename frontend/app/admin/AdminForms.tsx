@@ -13,7 +13,7 @@ const ReactQuill = dynamic(() => import('react-quill-new'), {
 });
 
 export default function AdminForms() {
-  const [activeTab, setActiveTab] = useState<'letters' | 'vouchers' | 'flowers'>('letters');
+  const [activeTab, setActiveTab] = useState<'letters' | 'vouchers' | 'flowers' | 'notebook'>('letters');
 
   // Letter State
   const [letterTitle, setLetterTitle] = useState('');
@@ -35,6 +35,79 @@ export default function AdminForms() {
   const [flowerColor, setFlowerColor] = useState('#e11d48');
   const [flowerUserId, setFlowerUserId] = useState('');
   const [flowerStatus, setFlowerStatus] = useState({ loading: false, message: '', isError: false });
+
+  // Notebook State
+  const [receivedNotes, setReceivedNotes] = useState<any[]>([]);
+  const [newNoteContent, setNewNoteContent] = useState('');
+  const [notebookStatus, setNotebookStatus] = useState({ loading: false, message: '', isError: false });
+  const [toast, setToast] = useState({ show: false, message: '' });
+
+  const ADMIN_ID = '4245ce5a-0f2a-4716-a2ff-d3993d5a5700';
+  const SENURI_ID = '6cbc990d-8540-4df5-b73c-9662e4e341d1';
+
+  React.useEffect(() => {
+    if (activeTab === 'notebook') {
+      fetchNotes();
+    }
+  }, [activeTab]);
+
+  const fetchNotes = async () => {
+    setNotebookStatus({ loading: true, message: 'Retrieving notes...', isError: false });
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/notebook?user_id=${ADMIN_ID}`);
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || 'Failed to fetch notes');
+      
+      // Filter notes where Senuri is the sender
+      const senuriNotes = data.data.filter((note: any) => note.sender_id === SENURI_ID);
+      setReceivedNotes(senuriNotes);
+      setNotebookStatus({ loading: false, message: '', isError: false });
+    } catch (err: any) {
+      setNotebookStatus({ loading: false, message: err.message, isError: true });
+    }
+  };
+
+  const handleKiss = async (noteId: string) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/notebook/${noteId}/kiss`, { method: 'PATCH' });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || 'Failed to send kiss');
+      
+      setToast({ show: true, message: 'Kiss Sent 💋' });
+      setTimeout(() => setToast({ show: false, message: '' }), 3000);
+      
+      // Update local state
+      setReceivedNotes(prev => prev.map(n => n.id === noteId ? { ...n, kisses: (n.kisses || 0) + 1 } : n));
+    } catch (err: any) {
+      console.error('Kiss error:', err.message);
+    }
+  };
+
+  const handleNoteSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newNoteContent.trim()) return;
+    
+    setNotebookStatus({ loading: true, message: 'Sharing note...', isError: false });
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/notebook`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sender_id: ADMIN_ID,
+          recipient_id: SENURI_ID,
+          content: newNoteContent
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || 'Failed to share note');
+      
+      setNotebookStatus({ loading: false, message: 'Note Shared ✨', isError: false });
+      setNewNoteContent('');
+      setTimeout(() => setNotebookStatus({ loading: false, message: '', isError: false }), 3000);
+    } catch (err: any) {
+      setNotebookStatus({ loading: false, message: err.message, isError: true });
+    }
+  };
 
   const handleLetterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -164,6 +237,14 @@ export default function AdminForms() {
           }`}
         >
           Florist Boutique
+        </button>
+        <button
+          onClick={() => setActiveTab('notebook')}
+          className={`flex-1 sm:flex-none px-8 py-4 rounded-full text-xs font-bold uppercase tracking-widest transition-all z-10 ${
+            activeTab === 'notebook' ? 'bg-rose-gold text-deep-velvet' : 'text-silk-white/60 hover:text-silk-white'
+          }`}
+        >
+          Notebook Manager
         </button>
       </div>
 
@@ -410,6 +491,116 @@ export default function AdminForms() {
             </div>
           </div>
         </form>
-      )}    </div>
+      )}
+
+      {/* ----------- NOTEBOOK MANAGER ----------- */}
+      {activeTab === 'notebook' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          
+          {/* Left: Received Notes */}
+          <div className="space-y-6">
+            <div className="flex items-center mb-4">
+              <div className="w-10 h-10 rounded-full bg-rose-gold/10 border border-rose-gold/20 flex items-center justify-center mr-3">
+                <span className="text-rose-gold font-serif text-lg">✎</span>
+              </div>
+              <h2 className="text-xl font-serif text-silk-white">Notes from Senuri</h2>
+            </div>
+
+            <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+              {notebookStatus.loading && receivedNotes.length === 0 ? (
+                <div className="p-8 text-center text-silk-white/20 italic font-serif">
+                  Scanning the archives...
+                </div>
+              ) : receivedNotes.length === 0 ? (
+                <div className="p-8 text-center text-silk-white/20 italic font-serif bg-white/5 border border-white/10 rounded-2xl">
+                  "Silence is a canvas, waiting for her words..."
+                </div>
+              ) : (
+                receivedNotes.map((note) => (
+                  <div key={note.id} className="bg-white/5 border border-white/10 p-6 rounded-2xl relative group hover:border-rose-gold/30 transition-colors">
+                    <p className="text-silk-white/90 font-sans leading-relaxed mb-4">
+                      {note.content}
+                    </p>
+                    <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-silk-white/30 font-bold">
+                      <span>{new Date(note.created_at).toLocaleDateString()}</span>
+                      <div className="flex items-center gap-4">
+                        {note.kisses > 0 && (
+                          <span className="text-rose-gold/60">
+                            {note.kisses} 💋
+                          </span>
+                        )}
+                        <button
+                          onClick={() => handleKiss(note.id)}
+                          className="px-4 py-1.5 bg-rose-gold/10 border border-rose-gold/30 text-rose-gold rounded-full hover:bg-rose-gold hover:text-deep-velvet transition-all font-bold text-[9px] uppercase tracking-tighter shadow-sm active:scale-95"
+                        >
+                          Send Kiss 💋
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Right: Write Note */}
+          <div className="space-y-6">
+            <div className="flex items-center mb-4">
+              <div className="w-10 h-10 rounded-full bg-rose-gold/10 border border-rose-gold/20 flex items-center justify-center mr-3">
+                <span className="text-rose-gold font-serif text-lg">✍</span>
+              </div>
+              <h2 className="text-xl font-serif text-silk-white">Share a Thought</h2>
+            </div>
+
+            <form onSubmit={handleNoteSubmit} className="bg-white/5 border border-white/10 p-8 rounded-3xl space-y-6">
+              <div className="space-y-2">
+                <label className="block text-xs font-bold uppercase tracking-[0.2em] text-rose-gold/70 ml-1">Your Message</label>
+                <textarea
+                  value={newNoteContent}
+                  onChange={(e) => setNewNoteContent(e.target.value)}
+                  placeholder="What's on your mind?"
+                  rows={6}
+                  className="w-full px-5 py-4 bg-[#0a0a0a]/50 border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-rose-gold/50 focus:border-rose-gold transition-colors text-silk-white placeholder:text-silk-white/20 resize-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-between pt-2">
+                <div className="h-6">
+                  {notebookStatus.message && (
+                    <span className={`text-[10px] uppercase tracking-widest font-bold ${notebookStatus.isError ? 'text-red-400' : 'text-rose-gold/60'}`}>
+                      {notebookStatus.message}
+                    </span>
+                  )}
+                </div>
+                <button
+                  type="submit"
+                  disabled={notebookStatus.loading || !newNoteContent.trim()}
+                  className="px-8 py-4 bg-rose-gold text-deep-velvet rounded-xl font-bold tracking-[0.2em] uppercase text-xs hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
+                >
+                  Share Note
+                </button>
+              </div>
+            </form>
+
+            <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-silk-white/20 mb-2">Target Recipient</p>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-rose-gold/10 flex items-center justify-center text-rose-gold font-bold text-xs">S</div>
+                <span className="text-sm text-silk-white/60 font-serif italic">Senuri Rukshani</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Global Toast */}
+      {toast.show && (
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-bottom-8 duration-500">
+          <div className="px-6 py-3 bg-rose-gold text-deep-velvet rounded-full font-bold uppercase tracking-widest text-[10px] shadow-[0_10px_30px_rgba(224,191,184,0.4)] border border-white/20">
+            {toast.message}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
