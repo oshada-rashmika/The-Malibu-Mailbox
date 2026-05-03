@@ -29,7 +29,15 @@ const Page = forwardRef<HTMLDivElement, PageProps>(({ children, number, isCover 
       }`}>
         {/* Leather texture for cover */}
         {isCover && (
-          <div className="absolute inset-0 opacity-20 pointer-events-none mix-blend-overlay bg-[url('https://www.transparenttextures.com/patterns/leather.png')]" />
+          <>
+            <div className="absolute inset-0 opacity-20 pointer-events-none mix-blend-overlay bg-[url('https://www.transparenttextures.com/patterns/leather.png')]" />
+            {/* Barbie decorative image at the bottom */}
+            <img 
+              src="/barbie.png" 
+              alt="" 
+              className="absolute bottom-0 left-0 w-full opacity-30 pointer-events-none object-contain translate-y-4"
+            />
+          </>
         )}
         
         {/* Paper texture for inner pages */}
@@ -40,7 +48,7 @@ const Page = forwardRef<HTMLDivElement, PageProps>(({ children, number, isCover 
           </>
         )}
 
-        <div className="h-full w-full p-10 flex flex-col items-center justify-center">
+        <div className="h-full w-full p-10 flex flex-col items-center justify-center relative z-10">
           {children}
         </div>
       </div>
@@ -127,7 +135,7 @@ export default function HeartbeatNotebook({
             <h1 className="text-4xl font-serif text-white mb-2 drop-shadow-lg tracking-tighter">
               Heartbeat
             </h1>
-            <p className="text-rose-gold font-cursive text-4xl drop-shadow-md">
+            <p className="text-rose-gold text-4xl drop-shadow-md font-cursive">
               Notebook
             </p>
             <div className="mt-8 w-12 h-px bg-white/40 mx-auto" />
@@ -136,12 +144,12 @@ export default function HeartbeatNotebook({
 
         {/* Introduction Page */}
         <Page>
-          <div className="text-center space-y-6">
+          <div className="text-center space-y-6 px-6">
             <h2 className="text-2xl font-serif text-deep-velvet/60 italic">Our Shared Whispers</h2>
-            <p className="text-lg font-handwriting text-deep-velvet/80 leading-relaxed">
+            <p className="text-2xl text-deep-velvet/80 leading-relaxed font-cursive">
               "Every word here is a heartbeat captured in time. A sanctuary for our thoughts, our dreams, and our infinite love."
             </p>
-            <div className="text-pink-400 text-3xl">♥</div>
+            <div className="text-pink-400 text-3xl animate-pulse">♥</div>
           </div>
         </Page>
 
@@ -179,7 +187,7 @@ export default function HeartbeatNotebook({
                       e.stopPropagation();
                       onKiss(entry.id);
                     }}
-                    className="text-[10px] uppercase tracking-tighter text-pink-500 hover:text-pink-700 transition-colors flex items-center gap-1 font-bold bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm"
+                    className="text-[10px] uppercase tracking-tighter text-pink-500 hover:text-pink-700 transition-colors flex items-center gap-1 font-bold bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm shadow-sm active:scale-95 transition-all"
                   >
                     Give a Kiss 💋
                   </button>
@@ -192,7 +200,7 @@ export default function HeartbeatNotebook({
         {/* Final Page */}
         <Page>
           <div className="text-center">
-            <p className="text-lg font-handwriting text-deep-velvet/40 italic">
+            <p className="text-2xl text-deep-velvet/40 italic font-cursive">
               To be continued...
             </p>
           </div>
