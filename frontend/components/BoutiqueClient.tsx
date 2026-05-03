@@ -152,9 +152,23 @@ export default function BoutiqueClient({ userId }: { userId: string }) {
               );
 
               return (
+                /**
+                 * TWO-LAYER APPROACH — critical to prevent framer-motion from
+                 * overwriting the CSS rotate transform:
+                 *
+                 * Outer motion.div  → handles opacity + y entrance animation only.
+                 *                     Positioned at the vase mouth (center-bottom).
+                 * Inner plain div   → handles rotation via pure CSS.
+                 *                     transformOrigin: 'bottom center' fans stems
+                 *                     out from a single pivot point like a real bouquet.
+                 *
+                 * If both live on the same element, framer-motion's transform
+                 * pipeline overwrites `transform: rotate(...)` and all stems
+                 * collapse onto a single vertical line.
+                 */
                 <motion.div
                   key={flower.id}
-                  initial={{ opacity: 0, y: 40 }}
+                  initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{
                     delay: i * 0.12,
@@ -164,26 +178,28 @@ export default function BoutiqueClient({ userId }: { userId: string }) {
                   }}
                   style={{
                     position: 'absolute',
-                    // Bottom of flower sits flush with the top rim of the vase (h-32 = 128px)
-                    bottom: '128px',
-                    // Center horizontally in the 340px container
+                    bottom: '128px',   // flush with vase top rim (h-32 = 128px)
                     left: '50%',
-                    // Shift left by half the flower's own width (w-32 = 128px → 64px)
-                    marginLeft: '-64px',
-                    // Rotate around the stem base so every flower fans from one point
-                    transformOrigin: 'bottom center',
-                    transform: `rotate(${angle}deg)`,
+                    marginLeft: '-64px', // center the 128px-wide flower
                     zIndex,
                   }}
                 >
-                  <BloomingFlower
-                    flowerType={flower.flower_type}
-                    meaning={flower.meaning}
-                    colorHex={flower.color_hex}
-                    stemAddedHeight={stemAddedHeight}
-                    onSelect={() => setSelectedFlower(flower)}
-                    isSelected={selectedFlower?.id === flower.id}
-                  />
+                  {/* Rotation layer — pure CSS, zero framer-motion interference */}
+                  <div
+                    style={{
+                      transformOrigin: 'bottom center',
+                      transform: `rotate(${angle}deg)`,
+                    }}
+                  >
+                    <BloomingFlower
+                      flowerType={flower.flower_type}
+                      meaning={flower.meaning}
+                      colorHex={flower.color_hex}
+                      stemAddedHeight={stemAddedHeight}
+                      onSelect={() => setSelectedFlower(flower)}
+                      isSelected={selectedFlower?.id === flower.id}
+                    />
+                  </div>
                 </motion.div>
               );
             })}
