@@ -81,13 +81,13 @@ const LipIcon = ({ scatterIndex }: { scatterIndex: number }) => {
 };
 
 const getDynamicTextSize = (length: number) => {
-  if (length < 30) return 'text-5xl leading-[1.2]';
-  if (length < 70) return 'text-4xl leading-[1.3]';
-  if (length < 120) return 'text-3xl leading-[1.4]';
-  if (length < 200) return 'text-2xl leading-[1.5]';
-  if (length < 300) return 'text-xl leading-[1.6]';
-  if (length < 400) return 'text-lg leading-[1.6]';
-  return 'text-base leading-[1.7]';
+  if (length < 30) return 'text-4xl leading-[1.3]';
+  if (length < 70) return 'text-3xl leading-[1.4]';
+  if (length < 120) return 'text-2xl leading-[1.5]';
+  if (length < 200) return 'text-xl leading-[1.6]';
+  if (length < 300) return 'text-lg leading-[1.6]';
+  if (length < 400) return 'text-base leading-[1.7]';
+  return 'text-sm leading-[1.8]';
 };
 
 export default function HeartbeatNotebook({ 
@@ -172,12 +172,14 @@ export default function HeartbeatNotebook({
         {/* Content Pages - One entry per page */}
         {entries.map((entry) => (
           <Page key={entry.id}>
-            <div className="w-full h-full flex flex-col justify-center relative group py-16 px-12">
-              <p 
-                className={`text-deep-velvet/90 mb-6 text-center font-cursive ${getDynamicTextSize(entry.content.length)}`}
-              >
-                {entry.content}
-              </p>
+            <div className="w-full h-full flex flex-col pt-12 pb-24 px-10 relative group">
+              <div className="flex-1 flex flex-col justify-center overflow-hidden">
+                <p 
+                  className={`text-deep-velvet/90 w-full text-center font-cursive ${getDynamicTextSize(entry.content.length)}`}
+                >
+                  {entry.content}
+                </p>
+              </div>
               
               {/* Kiss Reactions Container */}
               <div className="relative h-24 w-full mt-4">
