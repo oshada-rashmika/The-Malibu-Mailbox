@@ -45,7 +45,7 @@ const Page = forwardRef<HTMLDivElement, PageProps>(({ children, isCover, bgEleme
           </>
         )}
 
-        <div className="h-full w-full p-10 flex flex-col items-center justify-center relative z-10">
+        <div className="h-full w-full flex flex-col relative z-10">
           {children}
         </div>
       </div>
@@ -55,17 +55,31 @@ const Page = forwardRef<HTMLDivElement, PageProps>(({ children, isCover, bgEleme
 
 Page.displayName = 'Page';
 
-const LipIcon = ({ scatterIndex }: { scatterIndex: number }) => {
-  const x = (scatterIndex * 47) % 180 - 90;
-  const y = (scatterIndex * 31) % 50 - 25;
-  const rotate = (scatterIndex * 60) % 360;
+const LipIcon = ({ scatterIndex, total }: { scatterIndex: number; total: number }) => {
+  const cols = Math.ceil(Math.sqrt(total));
+  const col = scatterIndex % cols;
+  const row = Math.floor(scatterIndex / cols);
+
+  const baseX = (col - (cols - 1) / 2) * 48;
+  const baseY = (row - (Math.ceil(total / cols) - 1) / 2) * 38;
+
+  const jitterX = ((scatterIndex * 17) % 28) - 14;
+  const jitterY = ((scatterIndex * 13) % 18) - 9;
+
+  const x = baseX + jitterX;
+  const y = baseY + jitterY;
+  const rotate = (scatterIndex * 73) % 360;
 
   return (
     <motion.div
-      initial={{ scale: 0, opacity: 0, rotate: rotate - 45 }}
-      animate={{ scale: 1.1, opacity: 1, rotate: rotate }}
-      className="absolute pointer-events-none text-3xl select-none"
-      style={{ left: `calc(50% + ${x}px)`, top: `calc(50% + ${y}px)` }}
+      initial={{ scale: 0, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      className="absolute pointer-events-none select-none text-2xl"
+      style={{
+        left: `calc(50% + ${x}px)`,
+        top: `calc(50% + ${y}px)`,
+        transform: `translate(-50%, -50%) rotate(${rotate}deg)`,
+      }}
       transition={{
         type: 'spring',
         stiffness: 400,
@@ -95,6 +109,14 @@ const SENDER_MAP: Record<string, string> = {
 const getSenderName = (senderId: string): string =>
   SENDER_MAP[senderId] ?? 'Senuri Rukshani';
 
+const getKissContainerHeight = (kissCount: number): number => {
+  if (kissCount === 0) return 0;
+  const cols = Math.ceil(Math.sqrt(kissCount));
+  const rows = Math.ceil(kissCount / cols);
+  // 38px per row + 28px padding (14px top + 14px bottom jitter buffer)
+  return Math.min(rows * 38 + 28, 120);
+};
+
 export default function HeartbeatNotebook({
   entries,
   onKiss,
@@ -104,8 +126,6 @@ export default function HeartbeatNotebook({
   onKiss: (id: string) => void;
   currentUserId: string;
 }) {
-  // Use useSyncExternalStore or simply suppress hydration with suppressHydrationWarning.
-  // Avoid setState-in-effect by using a ref + suppressHydrationWarning instead.
   const flipBookRef = useRef<{ pageFlip: () => { flipNext: () => void } } | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -142,7 +162,7 @@ export default function HeartbeatNotebook({
       >
         {/* Front Cover */}
         <Page isCover={true}>
-          <div className="text-center">
+          <div className="flex-1 flex flex-col items-center justify-center text-center px-10">
             <h1 className="text-4xl font-serif text-white mb-2 drop-shadow-lg tracking-tighter">
               Heartbeat
             </h1>
@@ -163,7 +183,7 @@ export default function HeartbeatNotebook({
             />
           }
         >
-          <div className="w-full h-full flex flex-col justify-center relative group py-10 px-8">
+          <div className="flex-1 flex flex-col justify-center px-10 py-10">
             <div className="text-center space-y-6 relative z-10">
               <h2 className="text-2xl font-serif text-deep-velvet/60 italic">Our Shared Whispers</h2>
               <p className="text-2xl text-deep-velvet/80 leading-relaxed font-cursive">
@@ -176,64 +196,69 @@ export default function HeartbeatNotebook({
         </Page>
 
         {/* Content Pages */}
-        {entries.map((entry) => (
-          <Page key={entry.id}>
-            {/*
-              Layout: fixed footer at bottom, scrollable content area above it.
-              We avoid overlap by giving the footer a fixed height and letting
-              the text area fill the remaining space.
-            */}
-            <div className="w-full h-full flex flex-col py-6 px-8">
-              {/* ── Text + kisses: fills available height ── */}
-              <div className="flex-1 flex flex-col justify-center min-h-0 overflow-hidden">
-                <p
-                  className={`text-deep-velvet/90 text-center font-cursive ${getDynamicTextSize(
-                    entry.content.length
-                  )}`}
-                >
-                  {entry.content}
-                </p>
+        {entries.map((entry) => {
+          const kissCount = entry.kisses ?? 0;
+          const kissHeight = getKissContainerHeight(kissCount);
 
-                {/* Kiss scatter area — capped height so it never pushes footer */}
-                {(entry.kisses ?? 0) > 0 && (
-                  <div className="relative h-16 w-full mt-3 shrink-0">
-                    {[...Array(entry.kisses)].map((_, i) => (
-                      <LipIcon key={i} scatterIndex={i} />
+          return (
+            <Page key={entry.id}>
+              <div className="flex-1 flex flex-col px-8 py-6 min-h-0">
+
+                {/* Text area — grows to fill space, never overflows */}
+                <div className="flex-1 flex items-center justify-center min-h-0 overflow-hidden">
+                  <p
+                    className={`text-deep-velvet/90 text-center font-cursive ${getDynamicTextSize(
+                      entry.content.length
+                    )}`}
+                  >
+                    {entry.content}
+                  </p>
+                </div>
+
+                {/* Kiss scatter — fixed calculated height, fully visible */}
+                {kissCount > 0 && (
+                  <div
+                    className="relative w-full shrink-0"
+                    style={{ height: `${kissHeight}px` }}
+                  >
+                    {[...Array(kissCount)].map((_, i) => (
+                      <LipIcon key={i} scatterIndex={i} total={kissCount} />
                     ))}
                   </div>
                 )}
-              </div>
 
-              {/* ── Footer: always at the bottom, never overlaps text ── */}
-              <div className="shrink-0 flex items-center justify-between pt-3 border-t border-deep-velvet/10 mt-3">
-                <div className="flex flex-col">
-                  <span className="text-[10px] uppercase tracking-widest text-deep-velvet/50 font-bold mb-0.5">
-                    {getSenderName(entry.sender_id)}
-                  </span>
-                  <span className="text-[9px] uppercase tracking-widest text-deep-velvet/30 font-bold">
-                    {new Date(entry.created_at).toLocaleDateString()}
-                  </span>
+                {/* Footer — always last, never overlapped */}
+                <div className="shrink-0 flex items-center justify-between pt-3 border-t border-deep-velvet/10 mt-3">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] uppercase tracking-widest text-deep-velvet/50 font-bold mb-0.5">
+                      {getSenderName(entry.sender_id)}
+                    </span>
+                    <span className="text-[9px] uppercase tracking-widest text-deep-velvet/30 font-bold">
+                      {new Date(entry.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+
+                  {entry.sender_id !== currentUserId && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onKiss(entry.id);
+                      }}
+                      className="text-[10px] uppercase tracking-tighter text-pink-500 hover:text-pink-700 flex items-center gap-1 font-bold bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm shadow-sm active:scale-95 transition-all"
+                    >
+                      Give a Kiss 💋
+                    </button>
+                  )}
                 </div>
 
-                {entry.sender_id !== currentUserId && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onKiss(entry.id);
-                    }}
-                    className="text-[10px] uppercase tracking-tighter text-pink-500 hover:text-pink-700 flex items-center gap-1 font-bold bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm shadow-sm active:scale-95 transition-all"
-                  >
-                    Give a Kiss 💋
-                  </button>
-                )}
               </div>
-            </div>
-          </Page>
-        ))}
+            </Page>
+          );
+        })}
 
         {/* Final Page */}
         <Page>
-          <div className="text-center">
+          <div className="flex-1 flex items-center justify-center">
             <p className="text-2xl text-deep-velvet/40 italic font-cursive">
               To be continued...
             </p>
@@ -242,8 +267,8 @@ export default function HeartbeatNotebook({
 
         {/* Back Cover */}
         <Page isCover={true}>
-          <div className="opacity-40">
-            <div className="w-16 h-16 border-2 border-white/20 rounded-full flex items-center justify-center mx-auto">
+          <div className="flex-1 flex items-center justify-center opacity-40">
+            <div className="w-16 h-16 border-2 border-white/20 rounded-full flex items-center justify-center">
               <span className="text-white font-serif text-xl">M</span>
             </div>
           </div>
