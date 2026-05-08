@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 
 export interface WatercolorFlower {
   id?: string;
@@ -22,25 +22,27 @@ const normalizeFlowerType = (flowerType: string) => flowerType.trim();
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
-const bouquetVariants = {
+const EASE_OUT = [0.18, 1, 0.22, 1] as const;
+
+const bouquetVariants: Variants = {
   initial: { opacity: 0, scale: 0.92 },
   animate: {
     opacity: 1,
     scale: 1,
     transition: {
       duration: 0.6,
-      ease: [0.18, 1, 0.22, 1],
+      ease: EASE_OUT,
       staggerChildren: 0.06
     }
   }
 };
 
-const flowerVariants = {
+const flowerVariants: Variants = {
   initial: { opacity: 0, scale: 0.75 },
   animate: {
     opacity: 1,
     scale: 1,
-    transition: { duration: 0.5, ease: [0.18, 1, 0.22, 1] }
+    transition: { duration: 0.5, ease: EASE_OUT }
   }
 };
 
