@@ -31,42 +31,59 @@ const pseudoRandom = (seed: number) => {
 
 const lerp = (min: number, max: number, t: number) => min + (max - min) * t;
 
-const buildClusterLayout = (count: number) => {
+const hashSeed = (value: string) => {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash * 31 + value.charCodeAt(i)) % 100000;
+  }
+  return Math.abs(hash);
+};
+
+const gaussian = (seedA: number, seedB: number) => {
+  const u = clamp(pseudoRandom(seedA), 0.0001, 0.9999);
+  const v = clamp(pseudoRandom(seedB), 0.0001, 0.9999);
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+};
+
+const buildClusterLayout = (flowers: WatercolorFlower[]) => {
+  const count = flowers.length;
   const centerX = 50;
-  const centerY = 48;
-  const maxRadius = 18;
+  const centerY = 52;
+  const maxRadius = 15;
   const goldenAngle = 137.5 * (Math.PI / 180);
 
-  return Array.from({ length: count }, (_, index) => {
-    const t = count > 1 ? index / (count - 1) : 0;
+  return flowers.map((flower, index) => {
+    const seed = hashSeed(flower.id ?? `${flower.flower_type}-${index}`);
+    const t = count > 1 ? (index + pseudoRandom(seed)) / count : 0;
     const radius = Math.sqrt(t) * maxRadius;
-    const angle = index * goldenAngle;
-    const jitter = (pseudoRandom(index + 1) - 0.5) * 6;
-    const xPos = clamp(centerX + Math.cos(angle) * (radius + jitter), 30, 70);
-    const yPos = clamp(centerY + Math.sin(angle) * (radius + jitter) * 0.85, 30, 70);
-    const rotation = lerp(-15, 15, pseudoRandom(index + 10));
-    const scale = lerp(0.9, 1.1, pseudoRandom(index + 20));
+    const angle = index * goldenAngle + pseudoRandom(seed + 3) * 0.45;
+    const jitterX = gaussian(seed + 5, seed + 11) * 2.4;
+    const jitterY = gaussian(seed + 7, seed + 13) * 2.1;
+    const xPos = clamp(centerX + Math.cos(angle) * radius + jitterX, 32, 68);
+    const yPos = clamp(centerY + Math.sin(angle) * radius * 0.85 + jitterY, 34, 70);
+    const rotation = lerp(-15, 15, pseudoRandom(seed + 19));
+    const scale = lerp(0.85, 1.1, pseudoRandom(seed + 29));
 
     return {
       left: xPos,
       top: yPos,
       rotation,
       scale,
-      zIndex: index + 1
+      zIndex: 10 + index
     };
   });
 };
 
 export default function WatercolorBouquet({ flowers, className = '' }: WatercolorBouquetProps) {
   const orderedFlowers = [...flowers];
-  const clusterLayout = buildClusterLayout(orderedFlowers.length);
+  const clusterLayout = buildClusterLayout(orderedFlowers);
 
   return (
     <div className={`relative w-full aspect-square ${className}`}>
       <img
         src="/flowers/leaf.webp"
         alt="Bouquet leaf base"
-        className="absolute inset-0 w-full h-full object-contain scale-[1.12] origin-center z-0"
+        className="absolute inset-0 w-full h-full object-contain scale-[1.25] origin-center z-0"
       />
 
       {orderedFlowers.map((flower, index) => {
@@ -83,7 +100,7 @@ export default function WatercolorBouquet({ flowers, className = '' }: Watercolo
             key={key}
             src={`/flowers/${normalizeFlowerType(flower.flower_type)}.webp`}
             alt={flower.flower_type}
-            className="absolute w-[42%] sm:w-[40%] md:w-[38%] lg:w-[36%] object-contain -translate-x-1/2 -translate-y-1/2"
+            className="absolute w-[46%] sm:w-[43%] md:w-[40%] lg:w-[38%] object-contain -translate-x-1/2 -translate-y-1/2"
             style={{
               left: `${left}%`,
               top: `${top}%`,
