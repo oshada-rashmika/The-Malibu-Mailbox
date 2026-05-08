@@ -39,6 +39,7 @@ export interface Flower {
 
 export interface Bouquet {
   id: string;
+  user_id?: string;
   note_to: string;
   note_from: string;
   message: string;

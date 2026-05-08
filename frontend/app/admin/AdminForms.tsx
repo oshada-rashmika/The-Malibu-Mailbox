@@ -61,6 +61,7 @@ export default function AdminForms() {
   const [noteTo, setNoteTo] = useState('');
   const [noteFrom, setNoteFrom] = useState('');
   const [romanticMessage, setRomanticMessage] = useState('');
+  const [bouquetUserId, setBouquetUserId] = useState('');
   const [flowerCounts, setFlowerCounts] = useState<Record<FlowerOption, number>>(createEmptyFlowerCounts);
   const [flowerStatus, setFlowerStatus] = useState({ loading: false, message: '', isError: false });
 
@@ -233,6 +234,7 @@ export default function AdminForms() {
     const trimmedNoteTo = noteTo.trim();
     const trimmedNoteFrom = noteFrom.trim();
     const trimmedMessage = romanticMessage.trim();
+    const trimmedUserId = bouquetUserId.trim();
     const flowers = FLOWER_OPTIONS.flatMap((flower) =>
       Array.from({ length: flowerCounts[flower] }, () => flower)
     );
@@ -241,6 +243,15 @@ export default function AdminForms() {
       setFlowerStatus({
         loading: false,
         message: 'Note to, note from, and message are required.',
+        isError: true
+      });
+      return;
+    }
+
+    if (!trimmedUserId) {
+      setFlowerStatus({
+        loading: false,
+        message: 'Recipient user ID is required.',
         isError: true
       });
       return;
@@ -270,6 +281,7 @@ export default function AdminForms() {
             note_to: trimmedNoteTo,
             note_from: trimmedNoteFrom,
             message: trimmedMessage,
+            recipient_id: trimmedUserId,
             flowers: chunk
           })
         });
@@ -533,6 +545,18 @@ export default function AdminForms() {
                 rows={4}
                 required
                 className="w-full px-5 py-4 bg-[#0a0a0a]/50 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-gold/50 focus:border-rose-gold transition-colors text-silk-white placeholder:text-silk-white/20 resize-none"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-xs font-bold uppercase tracking-[0.2em] text-rose-gold/70 ml-1">Recipient User ID *</label>
+              <input
+                type="text"
+                value={bouquetUserId}
+                onChange={(e) => setBouquetUserId(e.target.value)}
+                placeholder="UUID of the recipient..."
+                required
+                className="w-full px-5 py-3 bg-[#0a0a0a]/50 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-gold/50 focus:border-rose-gold transition-colors text-silk-white placeholder:text-silk-white/20"
               />
             </div>
 

@@ -196,6 +196,7 @@ router.post('/bouquets', async (req, res, next) => {
     const noteTo = typeof req.body.note_to === 'string' ? req.body.note_to.trim() : '';
     const noteFrom = typeof req.body.note_from === 'string' ? req.body.note_from.trim() : '';
     const message = typeof req.body.message === 'string' ? req.body.message.trim() : '';
+    const recipientId = typeof req.body.recipient_id === 'string' ? req.body.recipient_id.trim() : '';
     const rawFlowers = Array.isArray(req.body.flowers) ? req.body.flowers : [];
     const flowers = rawFlowers
       .map((flower) => (typeof flower === 'string' ? flower.trim() : ''))
@@ -205,6 +206,13 @@ router.post('/bouquets', async (req, res, next) => {
       return res.status(400).json({
         success: false,
         message: 'note_to, note_from, and message are required.'
+      });
+    }
+
+    if (!recipientId) {
+      return res.status(400).json({
+        success: false,
+        message: 'recipient_id is required.'
       });
     }
 
@@ -235,6 +243,7 @@ router.post('/bouquets', async (req, res, next) => {
         .from('bouquets')
         .insert([
           {
+            user_id: recipientId,
             note_to: noteTo,
             note_from: noteFrom,
             message
