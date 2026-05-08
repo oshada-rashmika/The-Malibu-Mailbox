@@ -5,11 +5,6 @@ import { motion } from 'framer-motion';
 import type { CanvasElement } from '../types/canvas';
 
 // ─── Canonical Canvas Size (must match LetterCanvas.tsx exactly) ───────────────
-// All CanvasElement positions (x, y, width, height) are stored as percentages
-// of this canonical size. The renderer places elements at these percentages of
-// 390×844, then the ScaleContainer uses CSS `transform: scale()` to fit the
-// entire canvas into whatever space is available — guaranteeing **zero alignment
-// change** since no per-element coordinate recalculation happens.
 
 const CANVAS_W = 390;
 const CANVAS_H = 844;
@@ -25,13 +20,8 @@ interface ScaleContainerProps {
  * `transform: scale(s)` to fit the parent container while maintaining
  * exact relative positions. This is the "Zero Alignment Change" guarantee.
  *
- * How it works:
- *   1. A wrapper div measures its available width via ResizeObserver.
- *   2. We compute the uniform scale factor: availW / 390.
- *   3. The inner div is always exactly 390×844 px, with transform-origin
- *      at top-left, scaled by that factor.
- *   4. The wrapper's height is set explicitly so it doesn't collapse
- *      (since CSS transforms don't affect layout flow).
+ * The transform-origin is top-center and the inner box is centered via
+ * margin: 0 auto so there is never a grey gap on either side.
  */
 function ScaleContainer({ children }: ScaleContainerProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -52,10 +42,13 @@ function ScaleContainer({ children }: ScaleContainerProps) {
   return (
     <div
       ref={wrapperRef}
-      className="w-full flex justify-center"
       style={{
+        width: '100%',
+        // Reserve exact scaled height (CSS transforms don't affect layout flow)
         height: CANVAS_H * scaleFactor,
         overflow: 'hidden',
+        margin: '0 auto',
+        position: 'relative',
       }}
     >
       <div
@@ -63,7 +56,9 @@ function ScaleContainer({ children }: ScaleContainerProps) {
           width: CANVAS_W,
           height: CANVAS_H,
           transform: `scale(${scaleFactor})`,
-          transformOrigin: 'top left',
+          transformOrigin: 'top center',
+          // Center the 390px box inside the wrapper before scaling
+          margin: '0 auto',
           willChange: 'transform',
         }}
       >
@@ -126,13 +121,12 @@ function RenderElement({ el, index, animated }: RenderElementProps) {
     top,
     width,
     height,
+    maxWidth: CANVAS_W,          // never exceed canvas edge
     zIndex: index + 1,
     pointerEvents: 'none',
     boxSizing: 'border-box',
   };
 
-  // Wrapper: motion.div handles the bloom animation + rotation
-  // Inner: the actual content (text div or img)
   const Wrapper = animated ? motion.div : 'div';
   const wrapperProps = animated
     ? { variants: bloomElement, style: { ...positionStyle, transform: `rotate(${el.rotation}deg)` } }
@@ -143,8 +137,10 @@ function RenderElement({ el, index, animated }: RenderElementProps) {
     const isHtml = /<[a-z][\s\S]*>/i.test(el.content);
 
     const textStyle: React.CSSProperties = {
+      display: 'block',
       width: '100%',
       maxWidth: '100%',
+      height: '100%',
       boxSizing: 'border-box',
       padding: 16,
       fontSize: `${el.style.fontSize ?? 16}px`,
@@ -154,12 +150,13 @@ function RenderElement({ el, index, animated }: RenderElementProps) {
       textAlign: (el.style.textAlign as React.CSSProperties['textAlign']) ?? 'left',
       opacity: el.style.opacity ?? 1,
       overflow: 'hidden',
+      // Key wrapping rules — 'anywhere' is stronger than 'break-word'
       overflowWrap: 'anywhere',
-      whiteSpace: 'pre-wrap',
       wordBreak: 'normal',
+      // For plain text, preserve line breaks. For HTML, let <p> tags handle spacing.
+      whiteSpace: isHtml ? 'normal' : 'pre-wrap',
       userSelect: 'text',
       lineHeight: 1.6,
-      display: 'block',
     };
 
     return (
@@ -217,9 +214,6 @@ interface LetterCanvasRendererProps {
  * Renders `CanvasElement[]` at the fixed 390×844 canonical size, wrapped
  * in a `ScaleContainer` that uses CSS `transform: scale()` to fit any
  * parent. Zero alignment change guaranteed.
- *
- * When `animated` is true, elements enter with a staggered "bloom"
- * effect — scaling up from 0.6, blurring in, and sliding upward.
  */
 export default function LetterCanvasRenderer({ elements, animated = false }: LetterCanvasRendererProps) {
   const ContainerEl = animated ? motion.div : 'div';
@@ -239,6 +233,8 @@ export default function LetterCanvasRenderer({ elements, animated = false }: Let
           borderRadius: 24,
           boxShadow: '0 16px 60px rgba(60,20,10,0.2)',
           overflow: 'hidden',
+          // Ensure the paper fills exactly — no gap
+          margin: 0,
         }}
       >
         {/* Paper texture */}
