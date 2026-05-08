@@ -144,7 +144,7 @@ function RenderElement({ el, index, animated }: RenderElementProps) {
 
     const textStyle: React.CSSProperties = {
       width: '100%',
-      height: '100%',
+      maxWidth: '100%',
       boxSizing: 'border-box',
       padding: 16,
       fontSize: `${el.style.fontSize ?? 16}px`,
@@ -154,11 +154,12 @@ function RenderElement({ el, index, animated }: RenderElementProps) {
       textAlign: (el.style.textAlign as React.CSSProperties['textAlign']) ?? 'left',
       opacity: el.style.opacity ?? 1,
       overflow: 'hidden',
-      overflowWrap: 'break-word',
+      overflowWrap: 'anywhere',
       whiteSpace: 'pre-wrap',
-      wordBreak: 'break-word',
+      wordBreak: 'normal',
       userSelect: 'text',
       lineHeight: 1.6,
+      display: 'block',
     };
 
     return (
