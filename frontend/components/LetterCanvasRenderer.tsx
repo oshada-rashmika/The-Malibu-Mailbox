@@ -25,18 +25,38 @@ interface ScaleContainerProps {
  */
 function ScaleContainer({ children }: ScaleContainerProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
   const [scaleFactor, setScaleFactor] = useState(1);
+  const [contentHeight, setContentHeight] = useState(CANVAS_H);
 
   useEffect(() => {
     const measure = () => {
       if (!wrapperRef.current) return;
       const { width } = wrapperRef.current.getBoundingClientRect();
-      setScaleFactor(width / CANVAS_W);
+      const currentScale = width / CANVAS_W;
+      setScaleFactor(currentScale);
+
+      // Measure inner content height in case legacy letters expand it
+      if (innerRef.current) {
+        // We use scrollHeight to capture fully expanded relative content
+        setContentHeight(Math.max(CANVAS_H, innerRef.current.scrollHeight));
+      }
     };
+
     measure();
+    
+    // We observe both the wrapper (for width changes) and the inner content (for height expansion)
     const ro = new ResizeObserver(measure);
     if (wrapperRef.current) ro.observe(wrapperRef.current);
-    return () => ro.disconnect();
+    if (innerRef.current) ro.observe(innerRef.current);
+    
+    // Also re-measure after a slight delay to ensure fonts/images are loaded
+    const timeoutId = setTimeout(measure, 100);
+
+    return () => {
+      ro.disconnect();
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   return (
@@ -44,17 +64,20 @@ function ScaleContainer({ children }: ScaleContainerProps) {
       ref={wrapperRef}
       style={{
         width: '100%',
-        // Reserve exact scaled height (CSS transforms don't affect layout flow)
-        height: CANVAS_H * scaleFactor,
+        // Apply exactly the scaled height of the content
+        height: contentHeight * scaleFactor,
         position: 'relative',
-        // The modal handles overflow, but we keep this clean
+        // The modal handles overall overflow, but we keep this clean
         overflow: 'hidden',
+        transition: 'height 0.2s ease-out',
       }}
     >
       <div
+        ref={innerRef}
         style={{
           width: CANVAS_W,
-          height: CANVAS_H,
+          minHeight: CANVAS_H,
+          height: 'max-content',
           transform: `scale(${scaleFactor})`,
           transformOrigin: 'top left',
           position: 'absolute',
@@ -136,14 +159,14 @@ function RenderElement({ el, index, animated }: RenderElementProps) {
     const isHtml = /<[a-z][\s\S]*>/i.test(el.content);
 
     // For text elements: use full canvas width and let height auto-expand.
-    // Legacy letters were saved with small bounding boxes that clip content.
-    // By forcing left: 0, width: 100%, and minHeight instead of fixed height,
-    // all text is readable regardless of how the element was authored.
+    // Legacy HTML letters are set to relative positioning so they stretch the paper
+    // height automatically instead of overflowing out of the bottom.
     const textPositionStyle: React.CSSProperties = {
-      position: 'absolute',
-      left: 0,
-      top,
-      width: CANVAS_W,
+      position: isHtml ? 'relative' : 'absolute',
+      left: isHtml ? 0 : left,
+      top: isHtml ? 0 : top,
+      marginTop: isHtml ? top : 0,
+      width: isHtml ? CANVAS_W : width,
       minHeight: height,           // grow beyond stored height if needed
       zIndex: index + 1,
       pointerEvents: 'none',
@@ -248,7 +271,9 @@ export default function LetterCanvasRenderer({ elements, animated = false }: Let
         style={{
           position: 'relative',
           width: CANVAS_W,
-          height: CANVAS_H,
+          minHeight: CANVAS_H,
+          height: 'max-content',
+          paddingBottom: 40, // Ensure long text doesn't hit the very bottom edge
           background: 'linear-gradient(160deg, #fdf6f0 0%, #fae8e0 100%)',
           borderRadius: 24,
           boxShadow: '0 16px 60px rgba(60,20,10,0.2)',
