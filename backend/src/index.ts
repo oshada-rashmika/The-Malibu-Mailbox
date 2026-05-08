@@ -34,12 +34,14 @@ app.use(cors({
 
 app.use(express.json());
 
-// API Routes
-app.use('/api', apiRoutes);
+const apiBasePaths = ['/api', '/_/backend/api'];
 
-// Health check
-app.get('/api/health', (req: Request, res: Response) => {
+// API Routes (support Vercel prefix and local paths)
+apiBasePaths.forEach((basePath) => {
+  app.use(basePath, apiRoutes);
+  app.get(`${basePath}/health`, (req: Request, res: Response) => {
     res.status(200).json({ status: 'ok', message: 'Malibu Mailbox API is running' });
+  });
 });
 
 // Error Handler (Must be last)
