@@ -167,7 +167,8 @@ function RenderElement({ el, index, animated }: RenderElementProps) {
       top: isHtml ? 0 : top,
       marginTop: isHtml ? top : 0,
       width: isHtml ? CANVAS_W : width,
-      minHeight: height,           // grow beyond stored height if needed
+      height: isHtml ? 'auto' : height,
+      minHeight: isHtml ? height : undefined,
       zIndex: index + 1,
       pointerEvents: 'none',
       boxSizing: 'border-box',
@@ -181,21 +182,21 @@ function RenderElement({ el, index, animated }: RenderElementProps) {
     const textStyle: React.CSSProperties = {
       display: 'block',
       width: '100%',
+      height: isHtml ? 'auto' : '100%',
       boxSizing: 'border-box',
-      padding: '16px 24px',
+      padding: isHtml ? '16px 24px' : 0,
       fontSize: `${el.style.fontSize ?? 16}px`,
       color: el.style.color ?? '#1a1a1a',
       fontFamily: el.style.fontFamily ?? 'Georgia, serif',
       fontWeight: el.style.fontWeight ?? '400',
       textAlign: (el.style.textAlign as React.CSSProperties['textAlign']) ?? 'left',
       opacity: el.style.opacity ?? 1,
-      // No overflow clipping — all text must be visible and readable
-      overflow: 'visible',
-      overflowWrap: 'anywhere',
-      wordBreak: 'normal',
+      overflow: isHtml ? 'visible' : 'hidden',
+      overflowWrap: isHtml ? 'anywhere' : 'break-word',
+      wordBreak: isHtml ? 'normal' : 'break-word',
       whiteSpace: isHtml ? 'normal' : 'pre-wrap',
       userSelect: 'text',
-      lineHeight: 1.6,
+      lineHeight: isHtml ? 1.6 : 1.4,
     };
 
     return (
