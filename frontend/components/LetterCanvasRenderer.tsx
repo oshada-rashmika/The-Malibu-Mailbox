@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
 import type { CanvasElement } from '../types/canvas';
 
 // ─── Canonical Canvas Size (must match LetterCanvas.tsx exactly) ───────────────
@@ -12,7 +13,6 @@ import type { CanvasElement } from '../types/canvas';
 
 const CANVAS_W = 390;
 const CANVAS_H = 844;
-const ASPECT = CANVAS_H / CANVAS_W; // ~2.165
 
 // ─── ScaleContainer ───────────────────────────────────────────────────────────
 
@@ -26,8 +26,8 @@ interface ScaleContainerProps {
  * exact relative positions. This is the "Zero Alignment Change" guarantee.
  *
  * How it works:
- *   1. A wrapper div measures its available width/height via ResizeObserver.
- *   2. We compute the uniform scale factor: min(availW / 390, availH / 844).
+ *   1. A wrapper div measures its available width via ResizeObserver.
+ *   2. We compute the uniform scale factor: availW / 390.
  *   3. The inner div is always exactly 390×844 px, with transform-origin
  *      at top-left, scaled by that factor.
  *   4. The wrapper's height is set explicitly so it doesn't collapse
@@ -41,9 +41,7 @@ function ScaleContainer({ children }: ScaleContainerProps) {
     const measure = () => {
       if (!wrapperRef.current) return;
       const { width } = wrapperRef.current.getBoundingClientRect();
-      // Scale to fit available width (height is unbounded in most layouts)
-      const s = width / CANVAS_W;
-      setScaleFactor(s);
+      setScaleFactor(width / CANVAS_W);
     };
     measure();
     const ro = new ResizeObserver(measure);
@@ -56,8 +54,6 @@ function ScaleContainer({ children }: ScaleContainerProps) {
       ref={wrapperRef}
       className="w-full flex justify-center"
       style={{
-        // Reserve the exact scaled height so the container doesn't collapse.
-        // CSS transforms don't affect layout, so we must set this explicitly.
         height: CANVAS_H * scaleFactor,
         overflow: 'hidden',
       }}
@@ -68,7 +64,6 @@ function ScaleContainer({ children }: ScaleContainerProps) {
           height: CANVAS_H,
           transform: `scale(${scaleFactor})`,
           transformOrigin: 'top left',
-          // Prevent the browser from anti-aliasing text during scaling
           willChange: 'transform',
         }}
       >
@@ -78,64 +73,114 @@ function ScaleContainer({ children }: ScaleContainerProps) {
   );
 }
 
+// ─── Bloom Animation Variants ─────────────────────────────────────────────────
+
+const bloomContainer = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.18,
+      delayChildren: 0.3,
+    },
+  },
+};
+
+const bloomElement = {
+  hidden: {
+    opacity: 0,
+    scale: 0.6,
+    filter: 'blur(8px)',
+    y: 20,
+  },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    filter: 'blur(0px)',
+    y: 0,
+    transition: {
+      type: 'spring',
+      damping: 20,
+      stiffness: 120,
+      duration: 0.7,
+    },
+  },
+};
+
 // ─── Element Renderer ─────────────────────────────────────────────────────────
 
-function RenderElement({ el, index }: { el: CanvasElement; index: number }) {
-  // Convert percentage coords → px at the canonical 390×844 size.
-  // No scaling math needed — the ScaleContainer handles display scaling.
+interface RenderElementProps {
+  el: CanvasElement;
+  index: number;
+  animated: boolean;
+}
+
+function RenderElement({ el, index, animated }: RenderElementProps) {
   const left = (el.x / 100) * CANVAS_W;
   const top = (el.y / 100) * CANVAS_H;
   const width = (el.width / 100) * CANVAS_W;
   const height = (el.height / 100) * CANVAS_H;
 
-  const baseStyle: React.CSSProperties = {
+  const positionStyle: React.CSSProperties = {
     position: 'absolute',
     left,
     top,
     width,
     height,
-    transform: `rotate(${el.rotation}deg)`,
     zIndex: index + 1,
-    opacity: el.style.opacity ?? 1,
     pointerEvents: 'none',
   };
 
+  // Wrapper: motion.div handles the bloom animation + rotation
+  // Inner: the actual content (text div or img)
+  const Wrapper = animated ? motion.div : 'div';
+  const wrapperProps = animated
+    ? { variants: bloomElement, style: { ...positionStyle, transform: `rotate(${el.rotation}deg)` } }
+    : { style: { ...positionStyle, transform: `rotate(${el.rotation}deg)` } };
+
   if (el.type === 'text') {
     return (
-      <div
-        key={el.id}
-        style={{
-          ...baseStyle,
-          fontSize: `${el.style.fontSize ?? 16}px`,
-          color: el.style.color ?? '#1a1a1a',
-          fontFamily: el.style.fontFamily ?? 'Georgia, serif',
-          fontWeight: el.style.fontWeight ?? '400',
-          textAlign: (el.style.textAlign as React.CSSProperties['textAlign']) ?? 'left',
-          overflow: 'hidden',
-          whiteSpace: 'pre-wrap',
-          wordBreak: 'break-word',
-          userSelect: 'text',
-          lineHeight: 1.4,
-        }}
-      >
-        {el.content}
-      </div>
+      // @ts-expect-error -- motion.div and div have compatible props here
+      <Wrapper {...wrapperProps}>
+        <div
+          style={{
+            width: '100%',
+            height: '100%',
+            fontSize: `${el.style.fontSize ?? 16}px`,
+            color: el.style.color ?? '#1a1a1a',
+            fontFamily: el.style.fontFamily ?? 'Georgia, serif',
+            fontWeight: el.style.fontWeight ?? '400',
+            textAlign: (el.style.textAlign as React.CSSProperties['textAlign']) ?? 'left',
+            opacity: el.style.opacity ?? 1,
+            overflow: 'hidden',
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
+            userSelect: 'text',
+            lineHeight: 1.4,
+          }}
+        >
+          {el.content}
+        </div>
+      </Wrapper>
     );
   }
 
   if (el.type === 'image' || el.type === 'sticker') {
     return (
-      <img
-        key={el.id}
-        src={el.content}
-        alt=""
-        draggable={false}
-        style={{
-          ...baseStyle,
-          objectFit: 'contain',
-          userSelect: 'none',
-        }}
-      />
+      // @ts-expect-error -- motion.div and div have compatible props here
+      <Wrapper {...wrapperProps}>
+        <img
+          src={el.content}
+          alt=""
+          draggable={false}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'contain',
+            opacity: el.style.opacity ?? 1,
+            userSelect: 'none',
+          }}
+        />
+      </Wrapper>
     );
   }
 
@@ -146,25 +191,30 @@ function RenderElement({ el, index }: { el: CanvasElement; index: number }) {
 
 interface LetterCanvasRendererProps {
   elements: CanvasElement[];
+  /** When true, elements bloom/fade-in with staggered animation. */
+  animated?: boolean;
 }
 
 /**
- * Read-only canvas renderer.
+ * Read-only canvas renderer with optional reveal animation.
  *
- * Renders `CanvasElement[]` at the fixed 390×844 canonical size, then wraps
- * everything in a `ScaleContainer` that uses CSS `transform: scale()` to fit
- * any parent container. Because all elements are positioned at their exact
- * canonical coordinates and a single uniform scale is applied, there is
- * **zero alignment change** between the admin editor and this viewer.
+ * Renders `CanvasElement[]` at the fixed 390×844 canonical size, wrapped
+ * in a `ScaleContainer` that uses CSS `transform: scale()` to fit any
+ * parent. Zero alignment change guaranteed.
  *
- * The save/load pipeline:
- *   Admin → CanvasElement[] → JSON.stringify → Supabase JSONB `content` column
- *   User  → Supabase JSONB → CanvasElement[] → this renderer
+ * When `animated` is true, elements enter with a staggered "bloom"
+ * effect — scaling up from 0.6, blurring in, and sliding upward.
  */
-export default function LetterCanvasRenderer({ elements }: LetterCanvasRendererProps) {
+export default function LetterCanvasRenderer({ elements, animated = false }: LetterCanvasRendererProps) {
+  const ContainerEl = animated ? motion.div : 'div';
+  const containerProps = animated
+    ? { variants: bloomContainer, initial: 'hidden', animate: 'visible' }
+    : {};
+
   return (
     <ScaleContainer>
-      <div
+      <ContainerEl
+        {...containerProps}
         style={{
           position: 'relative',
           width: CANVAS_W,
@@ -189,9 +239,9 @@ export default function LetterCanvasRenderer({ elements }: LetterCanvasRendererP
 
         {/* Render elements — array order = z-order */}
         {elements.map((el, index) => (
-          <RenderElement key={el.id} el={el} index={index} />
+          <RenderElement key={el.id} el={el} index={index} animated={animated} />
         ))}
-      </div>
+      </ContainerEl>
     </ScaleContainer>
   );
 }

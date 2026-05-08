@@ -218,7 +218,7 @@ export default function HistoryClient() {
                 {isCanvasContent(selectedLetter.content) ? (
                   /* Canvas-based letter */
                   <div className="w-full">
-                    <LetterCanvasRenderer elements={selectedLetter.content} />
+                    <LetterCanvasRenderer elements={selectedLetter.content} animated />
                   </div>
                 ) : (
                   /* Legacy HTML letter */

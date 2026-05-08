@@ -118,7 +118,7 @@ export default function LetterClient({ letter }: LetterClientProps) {
                 {canvasMode ? (
                   /* Canvas-based letter (CanvasElement[] from JSONB) */
                   <div className="w-full">
-                    <LetterCanvasRenderer elements={letter.content as any[]} />
+                    <LetterCanvasRenderer elements={letter.content as any[]} animated />
                   </div>
                 ) : (
                   /* Legacy HTML letter (string content from old Quill editor) */
