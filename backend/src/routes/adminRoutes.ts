@@ -243,7 +243,7 @@ router.post('/bouquets', async (req, res, next) => {
 
     const flowers = normalizedFlowers.filter(isFlowerType);
 
-    const chunks: string[][] = [];
+    const chunks: FlowerType[][] = [];
     for (let i = 0; i < flowers.length; i += FLOWER_CHUNK_SIZE) {
       chunks.push(flowers.slice(i, i + FLOWER_CHUNK_SIZE));
     }
