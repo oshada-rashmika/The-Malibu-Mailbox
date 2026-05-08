@@ -45,6 +45,10 @@ app.get('/api/health', (req: Request, res: Response) => {
 // Error Handler (Must be last)
 app.use(errorHandler);
 
-app.listen(PORT, () => {
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
     console.log(`🚀 Backend server running on port ${PORT}`);
-});
+  });
+}
+
+export default app;
