@@ -4,17 +4,32 @@ import React, { useState } from 'react';
 import Envelope from './Envelope';
 import { motion, AnimatePresence } from 'framer-motion';
 import { API_BASE_URL } from '../utils/api';
+import dynamic from 'next/dynamic';
+
+// Lazy-load the canvas renderer (uses ResizeObserver)
+const LetterCanvasRenderer = dynamic(() => import('./LetterCanvasRenderer'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-[400px] bg-white/5 animate-pulse rounded-2xl flex items-center justify-center">
+      <span className="text-deep-velvet/20 text-xs uppercase tracking-widest">Loading…</span>
+    </div>
+  ),
+});
 
 interface Letter {
-
   id: string;
   title: string;
-  content: string;
+  content: string | any[];
   is_saved?: boolean;
 }
 
 interface LetterClientProps {
   letter: Letter | null;
+}
+
+/** Type guard: check if letter content is a canvas element array. */
+function isCanvasContent(content: unknown): content is any[] {
+  return Array.isArray(content);
 }
 
 export default function LetterClient({ letter }: LetterClientProps) {
@@ -57,6 +72,8 @@ export default function LetterClient({ letter }: LetterClientProps) {
     );
   }
 
+  const canvasMode = isCanvasContent(letter.content);
+
   return (
     <>
       <div className="w-full flex flex-col items-center animate-in fade-in slide-in-from-bottom-8 duration-1000">
@@ -98,10 +115,18 @@ export default function LetterClient({ letter }: LetterClientProps) {
                   <div className="h-px w-24 bg-gradient-to-r from-transparent via-rose-gold/30 to-transparent mx-auto" />
                 </header>
 
-                <article
-                  className="prose prose-md md:prose-lg prose-rose-gold max-w-none text-deep-velvet font-sans leading-relaxed quill-content pb-4 break-words [overflow-wrap:anywhere]"
-                  dangerouslySetInnerHTML={{ __html: letter.content }}
-                />
+                {canvasMode ? (
+                  /* Canvas-based letter (CanvasElement[] from JSONB) */
+                  <div className="w-full">
+                    <LetterCanvasRenderer elements={letter.content as any[]} animated />
+                  </div>
+                ) : (
+                  /* Legacy HTML letter (string content from old Quill editor) */
+                  <article
+                    className="prose prose-md md:prose-lg prose-rose-gold max-w-none text-deep-velvet font-sans leading-relaxed quill-content pb-4 break-words [overflow-wrap:anywhere]"
+                    dangerouslySetInnerHTML={{ __html: letter.content as string }}
+                  />
+                )}
 
               </div>
 

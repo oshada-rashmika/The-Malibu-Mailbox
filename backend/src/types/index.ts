@@ -11,12 +11,51 @@ export type FlowerType =
   | 'sunflower'
   | 'tulip';
 
+// ─── Canvas Types ─────────────────────────────────────────────────────────────
+
+export interface CanvasElementStyle {
+  fontSize?: number;
+  color?: string;
+  fontFamily?: string;
+  fontWeight?: string;
+  textAlign?: 'left' | 'center' | 'right';
+  opacity?: number;
+}
+
+export type CanvasElementType = 'text' | 'image' | 'sticker';
+
+/**
+ * A single element on the canvas letter editor.
+ * Stored as part of the JSONB `content` array in the `letters` table.
+ */
+export interface CanvasElement {
+  id: string;
+  type: CanvasElementType;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation: number;
+  content: string;
+  style: CanvasElementStyle;
+  zIndex?: number;
+}
+
+// ─── Domain Types ─────────────────────────────────────────────────────────────
+
 export interface Letter {
   id: string;
   created_at: string;
   scheduled_for: string; // ISO Date string (YYYY-MM-DD)
   title: string;
-  content: string;
+  /**
+   * Parsed JSONB array of canvas elements.
+   * Supabase JS client returns JSONB columns as native JS values — no
+   * JSON.parse() needed on the backend when using the typed client.
+   */
+  content: CanvasElement[];
+  is_saved?: boolean;
+  saved_at?: string;
 }
 
 export interface Voucher {
@@ -65,3 +104,4 @@ export interface NotebookEntry {
   content: string;
   kisses: number;
 }
+
