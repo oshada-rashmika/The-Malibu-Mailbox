@@ -12,11 +12,6 @@ export interface RomanticCardProps {
 
 const CARD_COLOR = '#f7efe4';
 
-const scallopStyle: React.CSSProperties = {
-  backgroundImage: `radial-gradient(circle at 10px 10px, transparent 9px, ${CARD_COLOR} 10px)`,
-  backgroundSize: '20px 20px'
-};
-
 export default function RomanticCard({
   noteTo,
   noteFrom,
@@ -39,15 +34,14 @@ export default function RomanticCard({
       type="button"
       onClick={() => setExpanded((prev) => !prev)}
       aria-expanded={expanded}
-      className={`relative w-full text-left rounded-[32px] border border-[#e8d7c4] shadow-[0_20px_40px_rgba(99,68,45,0.18)] px-6 py-8 sm:px-10 sm:py-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-gold/60 ${className}`}
+      className={`relative w-full text-left rounded-2xl border border-[#e8d7c4] shadow-[0_20px_40px_rgba(99,68,45,0.18)] px-6 py-8 sm:px-10 sm:py-10 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-gold/60 ${className}`}
       style={{
         backgroundColor: CARD_COLOR,
         backgroundImage:
           'linear-gradient(140deg, rgba(255,255,255,0.65), rgba(255,255,255,0) 60%), linear-gradient(180deg, #f7efe4 0%, #f3e6d6 100%)'
       }}
     >
-      <div className="pointer-events-none absolute -top-3 left-6 right-6 h-6" style={scallopStyle} />
-      <div className="pointer-events-none absolute -bottom-3 left-6 right-6 h-6 rotate-180" style={scallopStyle} />
+
 
       <div className="relative z-10 flex flex-col gap-6">
         <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-[#6d5141]">
