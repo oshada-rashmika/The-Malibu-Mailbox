@@ -4,9 +4,6 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: false
   },
-  experimental: {
-    turbo: false
-  },
   images: {
     unoptimized: true
   }
