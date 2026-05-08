@@ -14,6 +14,21 @@ const BUCKET = 'canvas-assets';
 const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1 MB
 const WEBP_QUALITY = 0.85;
 
+/**
+ * Build the correct public URL for a Supabase Storage object.
+ * Always produces: https://<project>.supabase.co/storage/v1/object/public/<bucket>/<path>
+ *
+ * We construct this manually instead of using `getPublicUrl()` because
+ * some Supabase client versions omit the `/public/` segment or produce
+ * signed-URL paths that return 400 errors for public buckets.
+ */
+function buildPublicUrl(storagePath: string): string {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  // Strip trailing slash from the project URL if present
+  const base = supabaseUrl.replace(/\/+$/, '');
+  return `${base}/storage/v1/object/public/${BUCKET}/${storagePath}`;
+}
+
 export type AssetType = 'sticker' | 'image';
 
 export interface UploadedAsset {
@@ -122,10 +137,8 @@ export async function uploadCanvasAsset(
     throw new Error(`Upload failed: ${error.message}`);
   }
 
-  const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(storagePath);
-
   return {
-    url: urlData.publicUrl,
+    url: buildPublicUrl(storagePath),
     path: storagePath,
   };
 }
@@ -153,11 +166,10 @@ export async function listCanvasAssets(type: AssetType): Promise<StoredAsset[]> 
     .filter((f) => f.name !== '.emptyFolderPlaceholder')
     .map((f) => {
       const path = `${folder}/${f.name}`;
-      const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(path);
       return {
         name: f.name,
         path,
-        url: urlData.publicUrl,
+        url: buildPublicUrl(path),
         size: f.metadata?.size ?? 0,
         createdAt: f.created_at ?? '',
       };

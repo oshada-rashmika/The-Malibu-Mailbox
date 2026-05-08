@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import type { BouquetFlower, FlowerType } from '../types';
 import { supabase } from '../config/supabase';
 
@@ -89,21 +90,36 @@ const buildBouquetFlowers = (bouquetId: string, flowers: FlowerType[]): BouquetF
 };
 
 // POST /api/admin/letters
-router.post('/letters', async (req, res, next) => {
+router.post('/letters', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { title, content, date, user_id } = req.body;
 
-    if (!content || !date) {
+    // ── Validate content is a non-empty CanvasElement[] array ──
+    if (!Array.isArray(content)) {
+      console.error('[Admin] Letters: content is not an array.', { contentType: typeof content });
       return res.status(400).json({
         success: false,
-        message: 'Letter content and a specific date are required.',
+        message: 'Letter content must be a JSON array of canvas elements (CanvasElement[]).',
       });
     }
 
-    // Validate that the date is in the future
+    if (content.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Letter content must contain at least one canvas element.',
+      });
+    }
+
+    if (!date) {
+      return res.status(400).json({
+        success: false,
+        message: 'A delivery date is required.',
+      });
+    }
+
+    // ── Validate date ──
     const scheduledDate = new Date(date);
     const today = new Date();
-    // Normalize today to start of day for accurate future comparison
     today.setHours(0, 0, 0, 0);
 
     if (isNaN(scheduledDate.getTime())) {
@@ -116,45 +132,65 @@ router.post('/letters', async (req, res, next) => {
     if (scheduledDate <= today) {
       return res.status(400).json({
         success: false,
-        message: 'The specific date must be in the future.',
+        message: 'The delivery date must be in the future.',
       });
     }
 
-    // Perform database insertion
+    // ── Insert into Supabase ──
+    // IMPORTANT: Do NOT JSON.stringify(content). The Supabase JS client
+    // handles JSONB columns natively — pass the array directly.
+    const insertPayload = {
+      title: title || 'A Secret Letter',
+      content,                          // CanvasElement[] → JSONB natively
+      scheduled_for: date,              // YYYY-MM-DD
+      user_id: user_id || null,
+    };
+
+    console.log('[Admin] Inserting letter:', {
+      title: insertPayload.title,
+      elementCount: content.length,
+      scheduledFor: date,
+      userId: user_id || '(none)',
+    });
+
     const { data, error } = await supabase
       .from('letters')
-      .insert([{
-        title: title || 'A Secret Letter',
-        content,
-        scheduled_for: date, // Format YYYY-MM-DD expected
-        user_id: user_id || null, // Important if your database schema secures rows by RLS
-      }])
-
-
+      .insert([insertPayload])
       .select()
       .single();
 
     if (error) {
-      console.error('[Admin] Error saving letter:', error);
+      // Log the full Supabase error for debugging
+      console.error('[Admin] Supabase error saving letter:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+      });
       return res.status(500).json({
         success: false,
-        message: 'Failed to save the letter.',
+        message: `Failed to save the letter: ${error.message}`,
         error: error.message,
+        hint: error.hint || null,
+        code: error.code || null,
       });
     }
+
+    console.log('[Admin] Letter saved successfully:', data.id);
 
     res.status(201).json({
       success: true,
       message: 'Letter successfully scheduled! 🕊️',
       data,
     });
-  } catch (err) {
+  } catch (err: any) {
+    console.error('[Admin] Unexpected error in POST /letters:', err?.message || err);
     next(err);
   }
 });
 
 // POST /api/admin/vouchers
-router.post('/vouchers', async (req, res, next) => {
+router.post('/vouchers', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { title, description, code, user_id } = req.body;
 
@@ -197,7 +233,7 @@ router.post('/vouchers', async (req, res, next) => {
 });
 
 // POST /api/admin/bouquets
-router.post('/bouquets', async (req, res, next) => {
+router.post('/bouquets', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const noteTo = typeof req.body.note_to === 'string' ? req.body.note_to.trim() : '';
     const noteFrom = typeof req.body.note_from === 'string' ? req.body.note_from.trim() : '';
@@ -305,7 +341,7 @@ router.post('/bouquets', async (req, res, next) => {
 });
 
 // POST /api/admin/flowers
-router.post('/flowers', async (req, res, next) => {
+router.post('/flowers', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { flower_type, meaning, color_hex, recipient_id } = req.body;
     const cleanRecipientId = recipient_id?.trim();
