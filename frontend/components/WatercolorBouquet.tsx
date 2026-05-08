@@ -61,7 +61,7 @@ export default function WatercolorBouquet({ flowers, className = '' }: Watercolo
       animate="animate"
     >
       <motion.img
-        src="/flowers/leaf.png"
+        src="/flowers/leaf.webp"
         alt="Bouquet leaf base"
         className="absolute inset-0 w-full h-full object-contain z-[1]"
         variants={flowerVariants}
@@ -78,7 +78,7 @@ export default function WatercolorBouquet({ flowers, className = '' }: Watercolo
         return (
           <motion.img
             key={key}
-            src={`/flowers/${normalizeFlowerType(flower.flower_type)}.png`}
+            src={`/flowers/${normalizeFlowerType(flower.flower_type)}.webp`}
             alt={flower.flower_type}
             className="absolute w-[38%] sm:w-[34%] md:w-[32%] lg:w-[30%] object-contain"
             style={{

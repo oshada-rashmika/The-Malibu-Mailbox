@@ -578,7 +578,7 @@ export default function AdminForms() {
                       className="relative bg-[#0a0a0a]/50 border border-white/10 rounded-2xl p-3 flex flex-col items-center gap-2 hover:border-rose-gold/40 hover:bg-white/5 transition-all"
                     >
                       <img
-                        src={`/flowers/${flower}.png`}
+                        src={`/flowers/${flower}.webp`}
                         alt={`${formatFlowerLabel(flower)} watercolor`}
                         className="w-14 h-14 object-contain"
                       />
