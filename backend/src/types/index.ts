@@ -1,3 +1,16 @@
+export type FlowerType =
+  | 'blue'
+  | 'cornflower'
+  | 'flower'
+  | 'Hibiscus'
+  | 'leaf'
+  | 'lily'
+  | 'poppy'
+  | 'purple'
+  | 'rose'
+  | 'sunflower'
+  | 'tulip';
+
 export interface Letter {
   id: string;
   created_at: string;
@@ -18,10 +31,29 @@ export interface Voucher {
 export interface Flower {
   id: string;
   sent_at: string;
-  flower_type: string;
+  flower_type: FlowerType;
   meaning: string;
   color_hex: string;
   user_id: string; // Refers to the auth.users(id) in the DB
+}
+
+export interface Bouquet {
+  id: string;
+  note_to: string;
+  note_from: string;
+  message: string;
+  created_at: string;
+}
+
+export interface BouquetFlower {
+  id: string;
+  bouquet_id: string;
+  flower_type: FlowerType;
+  x_pos: number;
+  y_pos: number;
+  rotation: number;
+  scale: number;
+  z_index: number;
 }
 
 export interface NotebookEntry {
