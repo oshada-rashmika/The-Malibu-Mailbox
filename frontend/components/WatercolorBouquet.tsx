@@ -129,8 +129,21 @@ const buildLayout = (
   const placed: PlacedItem[] = [];
 
   // ── Pass 1: Place flowers (face / mid / back) ─────────────────────────────
-  // Spiral radius grows from 0 → 26% as more flowers are added, so the first
-  // flower goes in the center and subsequent ones spiral outward.
+  // Spiral radius grows from 0 →18% as more flowers are added.
+  //
+  // Top-clamp is PER CLASS because 'back' flowers (tulip, iris) have long stems
+  // that extend well below their anchor point. The stem of a tulip can reach
+  // ~20% below center, so anchoring at top>56% means the stem exits the leaf.
+  //   • 'back' (tulip/iris)  → top max 54%  (stem tip stays ~≤74%)
+  //   • 'face'/'mid'         → top max 62%  (compact heads, short stems)
+  const TOP_MAX: Record<FlowerClass, number> = {
+    face: 62,
+    mid:  62,
+    back: 54,  // ← key change: tulips must sit higher so stems hide behind leaf base
+    leaf: 70,
+  };
+  const LEFT_MIN = 28;
+  const LEFT_MAX = 72;
 
   flowerItems.forEach((item, i) => {
     const cls  = getClass(item.flower_type);
@@ -167,11 +180,11 @@ const buildLayout = (
       if (!tooClose) break;
     }
 
-    // Strict boundary: clamp to the leaf silhouette's content area.
-    // The leaf.webp has its painted mass between roughly 26–74% horizontally
-    // and 26–70% vertically — nothing should escape these bounds.
-    left = clamp(left, 26, 74);
-    top  = clamp(top,  26, 70);
+    // ── Stem-aware hard boundary ─────────────────────────────────────────────
+    // Applied inside and after the anti-clump loop so no amount of nudging
+    // can push a flower (or its stem) outside the leaf silhouette.
+    left = clamp(left, LEFT_MIN, LEFT_MAX);
+    top  = clamp(top,  28, TOP_MAX[cls]);
 
     // Tilt each flower toward the centre axis — creates the "gathered" look
     const tiltToCenter = -(left - CX) * 0.55;
