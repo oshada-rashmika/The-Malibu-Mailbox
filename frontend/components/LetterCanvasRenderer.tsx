@@ -116,45 +116,60 @@ function RenderElement({ el, index, animated }: RenderElementProps) {
   const width = (el.width / 100) * CANVAS_W;
   const height = (el.height / 100) * CANVAS_H;
 
+  // For images/stickers, use exact stored coordinates
   const positionStyle: React.CSSProperties = {
     position: 'absolute',
     left,
     top,
     width,
     height,
-    maxWidth: CANVAS_W,          // never exceed canvas edge
+    maxWidth: CANVAS_W,
     zIndex: index + 1,
     pointerEvents: 'none',
     boxSizing: 'border-box',
   };
 
   const Wrapper = animated ? motion.div : 'div';
-  const wrapperProps = animated
-    ? { variants: bloomElement, style: { ...positionStyle, transform: `rotate(${el.rotation}deg)` } }
-    : { style: { ...positionStyle, transform: `rotate(${el.rotation}deg)` } };
 
   if (el.type === 'text') {
     // Detect if content contains HTML tags (legacy Quill content)
     const isHtml = /<[a-z][\s\S]*>/i.test(el.content);
 
+    // For text elements: use full canvas width and let height auto-expand.
+    // Legacy letters were saved with small bounding boxes that clip content.
+    // By forcing left: 0, width: 100%, and minHeight instead of fixed height,
+    // all text is readable regardless of how the element was authored.
+    const textPositionStyle: React.CSSProperties = {
+      position: 'absolute',
+      left: 0,
+      top,
+      width: CANVAS_W,
+      minHeight: height,           // grow beyond stored height if needed
+      zIndex: index + 1,
+      pointerEvents: 'none',
+      boxSizing: 'border-box',
+      transform: `rotate(${el.rotation}deg)`,
+    };
+
+    const textWrapperProps = animated
+      ? { variants: bloomElement, style: textPositionStyle }
+      : { style: textPositionStyle };
+
     const textStyle: React.CSSProperties = {
       display: 'block',
       width: '100%',
-      maxWidth: '100%',
-      height: '100%',
       boxSizing: 'border-box',
-      padding: 16,
+      padding: '16px 24px',
       fontSize: `${el.style.fontSize ?? 16}px`,
       color: el.style.color ?? '#1a1a1a',
       fontFamily: el.style.fontFamily ?? 'Georgia, serif',
       fontWeight: el.style.fontWeight ?? '400',
       textAlign: (el.style.textAlign as React.CSSProperties['textAlign']) ?? 'left',
       opacity: el.style.opacity ?? 1,
-      overflow: 'hidden',
-      // Key wrapping rules — 'anywhere' is stronger than 'break-word'
+      // No overflow clipping — all text must be visible and readable
+      overflow: 'visible',
       overflowWrap: 'anywhere',
       wordBreak: 'normal',
-      // For plain text, preserve line breaks. For HTML, let <p> tags handle spacing.
       whiteSpace: isHtml ? 'normal' : 'pre-wrap',
       userSelect: 'text',
       lineHeight: 1.6,
@@ -162,7 +177,7 @@ function RenderElement({ el, index, animated }: RenderElementProps) {
 
     return (
       // @ts-expect-error -- motion.div and div have compatible props here
-      <Wrapper {...wrapperProps}>
+      <Wrapper {...textWrapperProps}>
         {isHtml ? (
           <div
             style={textStyle}
@@ -179,9 +194,13 @@ function RenderElement({ el, index, animated }: RenderElementProps) {
   }
 
   if (el.type === 'image' || el.type === 'sticker') {
+    const imgWrapperProps = animated
+      ? { variants: bloomElement, style: { ...positionStyle, transform: `rotate(${el.rotation}deg)` } }
+      : { style: { ...positionStyle, transform: `rotate(${el.rotation}deg)` } };
+
     return (
       // @ts-expect-error -- motion.div and div have compatible props here
-      <Wrapper {...wrapperProps}>
+      <Wrapper {...imgWrapperProps}>
         <img
           src={el.content}
           alt=""
