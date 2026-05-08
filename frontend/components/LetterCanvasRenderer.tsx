@@ -44,10 +44,8 @@ function ScaleContainer({ children }: ScaleContainerProps) {
       ref={wrapperRef}
       style={{
         width: '100%',
-        // Reserve exact scaled height (CSS transforms don't affect layout flow)
         height: CANVAS_H * scaleFactor,
         overflow: 'hidden',
-        margin: '0 auto',
         position: 'relative',
       }}
     >
@@ -56,9 +54,7 @@ function ScaleContainer({ children }: ScaleContainerProps) {
           width: CANVAS_W,
           height: CANVAS_H,
           transform: `scale(${scaleFactor})`,
-          transformOrigin: 'top center',
-          // Center the 390px box inside the wrapper before scaling
-          margin: '0 auto',
+          transformOrigin: 'top left',
           willChange: 'transform',
         }}
       >
