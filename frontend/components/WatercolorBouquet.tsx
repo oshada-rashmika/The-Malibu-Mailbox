@@ -67,32 +67,39 @@ const getTier = (flowerType: string): Tier => FLOWER_TIERS[flowerType.toLowerCas
 
 // ─── Radius Bands per Tier ────────────────────────────────────────────────────
 //
-// Tier 1 face flowers cluster dead-centre so they dominate the composition.
-// Tier 3 (tulips) are pushed slightly outward/inward so wide blooms cover stems.
-// Tier 4 foliage stays on the perimeter, visible as a fringe around the mound.
+// Each tier occupies a DISTINCT radial ring so flowers don't all land at the
+// same coordinates. Bands are ordered: face (centre) → mid → back → leaf (edge).
+//
+//  Tier 1 face:  0–10 %   — dead centre; dominant blooms
+//  Tier 2 mid:   8–18 %   — slight overlap with face so they nestle together
+//  Tier 3 back:  5–15 %   — tulips tucked behind face blooms
+//  Tier 4 leaf: 14–32 %   — outer fringe, clearly outside the flower core
 
 const TIER_RADIUS: Record<Tier, { min: number; max: number }> = {
-  1: { min: 0,  max: 12 }, // face — heart of the bouquet
-  2: { min: 5,  max: 16 }, // mid  — rings the face layer
-  3: { min: 3,  max: 14 }, // back — slightly inward so stems hide under face blooms
-  4: { min: 12, max: 22 }, // leaf — outer fringe
+  1: { min: 0,  max: 10 },
+  2: { min: 8,  max: 18 },
+  3: { min: 5,  max: 15 },
+  4: { min: 14, max: 32 },
 };
 
-// Size in % of container width
+// Size in % of container width — increased so each flower is clearly readable
 const TIER_WIDTH: Record<Tier, string> = {
-  1: '26%',
-  2: '22%',
-  3: '20%',
-  4: '20%',
+  1: '30%',
+  2: '26%',
+  3: '24%',
+  4: '22%',
 };
 
 // Scale multiplier range
 const TIER_SCALE: Record<Tier, [number, number]> = {
-  1: [0.92, 1.10],
-  2: [0.82, 1.00],
-  3: [0.78, 0.96],
-  4: [0.80, 1.00],
+  1: [0.90, 1.05],
+  2: [0.82, 0.98],
+  3: [0.78, 0.94],
+  4: [0.80, 0.98],
 };
+
+/** Minimum anchor-point separation (% units) to prevent total overlap */
+const MIN_SEP_PCT = 10; // ~40 px on a 400 px container
 
 // ─── Layout engine ────────────────────────────────────────────────────────────
 
@@ -141,15 +148,37 @@ const buildLayout = (items: WatercolorFlower[]): PlacedItem[] => {
     const jx = (rng(seed + 13) - 0.5) * 3.5;
     const jy = (rng(seed + 17) - 0.5) * 3.5;
 
-    let left = clamp(CX + Math.cos(angle) * radius + jx, 16, 84);
-    let top  = clamp(CY + Math.sin(angle) * radius + jy, 16, 84);
+    let left = clamp(CX + Math.cos(angle) * radius + jx, 14, 86);
+    let top  = clamp(CY + Math.sin(angle) * radius + jy, 14, 86);
 
-    // "Gathered" rotation: tilt each flower toward the vertical centre axis.
-    // A flower to the right leans left (negative), left leans right (positive).
-    // Extra jitter (±12°) gives hand-arranged variety.
-    const tiltToCenter = -(left - CX) * 0.55;
-    const jitterRot    = lerp(-12, 12, rng(seed + 23));
-    const rotation     = clamp(tiltToCenter + jitterRot, -35, 35);
+    // ── Anti-clump: nudge away from every already-placed flower ─────────────
+    // Only run for same-tier neighbours — we WANT cross-tier overlap (depth).
+    // Up to 20 iterations is enough to resolve dense packs.
+    let attempts = 0;
+    while (attempts < 20) {
+      let tooClose = false;
+      for (const p of placed) {
+        if (p.tier !== tier) continue; // cross-tier overlap is intentional
+        const dx   = left - p.left;
+        const dy   = top  - p.top;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < MIN_SEP_PCT && dist > 0.001) {
+          const push = (MIN_SEP_PCT - dist) * 0.55;
+          left += (dx / dist) * push;
+          top  += (dy / dist) * push;
+          tooClose = true;
+        }
+      }
+      if (!tooClose) break;
+      attempts++;
+    }
+    left = clamp(left, 14, 86);
+    top  = clamp(top,  14, 86);
+
+    // "Gathered" rotation: tilt toward centre axis ± jitter
+    const tiltToCenter = -(left - CX) * 0.50;
+    const jitterRot    = lerp(-14, 14, rng(seed + 23));
+    const rotation     = clamp(tiltToCenter + jitterRot, -38, 38);
 
     const scaleBand = TIER_SCALE[tier];
     const scale     = lerp(scaleBand[0], scaleBand[1], rng(seed + 29));
