@@ -74,11 +74,11 @@ const buildLayout = (items: WatercolorFlower[], containerPx = 400): PlacedItem[]
    * we spread flowers from 8 % to 38 % from center (i.e. ≤ 38 % radius)
    * so they sit within the green zone.
    */
-  const MIN_R = 6;   // % — keeps flowers off the absolute centre
-  const MAX_R = 38;  // % — stays within the leaf silhouette
+  const MIN_R = 2;   // % — allows flowers to sit near the true centre
+  const MAX_R = 22;  // % — tight mound well inside the leaf silhouette
 
   /** Minimum separation between flower anchor-points in % units */
-  const MIN_SEP_PCT = (60 / containerPx) * 100; // ~15 % for a 400 px container
+  const MIN_SEP_PCT = (30 / containerPx) * 100; // ~7.5 % — allows genuine overlap
 
   const placed: PlacedItem[] = [];
 
@@ -126,12 +126,12 @@ const buildLayout = (items: WatercolorFlower[], containerPx = 400): PlacedItem[]
     // Rotation: −45 … +45°
     const rotation = lerp(-45, 45, rng(seed + 19));
 
-    // Scale: larger flowers closer to the edge (they peek out of the foliage)
-    // Non-foliage flowers: 1.2 – 1.65; foliage: 0.9 – 1.2
+    // Scale: subtle variation — flowers are subordinate to the overall mound
+    // Non-foliage flowers: 0.78 – 1.05; foliage: 0.72 – 0.95
     const isLeaf = item.flower_type === 'leaf';
     const scale = isLeaf
-      ? lerp(0.90, 1.20, rng(seed + 29))
-      : lerp(1.20, 1.65, rng(seed + 29));
+      ? lerp(0.72, 0.95, rng(seed + 29))
+      : lerp(0.78, 1.05, rng(seed + 29));
 
     placed.push({ item, left, top, rotation, scale, zIndex: 0, seed });
   });
@@ -188,13 +188,14 @@ export default function WatercolorBouquet({ flowers, className = '' }: Watercolo
         const isLeaf = item.flower_type === 'leaf';
 
         /**
-         * Width sizing:
-         *  • Flowers: 32 % of container — roughly 2–2.5× the old 14–18 % sizes.
-         *  • Leaves: 28 % — present but subordinate to flowers.
+         * Width sizing (dense-cluster mode):
+         *  • Flowers: 22 % of container — large enough to read clearly but
+         *    small enough for 10 blooms to overlap into a mound.
+         *  • Leaves: 20 % — fill gaps without overwhelming the flowers.
          *
-         * These are percentage widths so the component scales with its container.
+         * Percentage widths keep the cluster proportional on all screen sizes.
          */
-        const widthPct = isLeaf ? '28%' : '32%';
+        const widthPct = isLeaf ? '20%' : '22%';
 
         return (
           <motion.img
