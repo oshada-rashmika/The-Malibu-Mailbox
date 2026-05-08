@@ -44,9 +44,11 @@ function ScaleContainer({ children }: ScaleContainerProps) {
       ref={wrapperRef}
       style={{
         width: '100%',
+        // Reserve exact scaled height (CSS transforms don't affect layout flow)
         height: CANVAS_H * scaleFactor,
-        overflow: 'hidden',
         position: 'relative',
+        // The modal handles overflow, but we keep this clean
+        overflow: 'hidden',
       }}
     >
       <div
@@ -55,6 +57,9 @@ function ScaleContainer({ children }: ScaleContainerProps) {
           height: CANVAS_H,
           transform: `scale(${scaleFactor})`,
           transformOrigin: 'top left',
+          position: 'absolute',
+          left: 0,
+          top: 0,
           willChange: 'transform',
         }}
       >

@@ -98,26 +98,33 @@ export default function LetterClient({ letter }: LetterClientProps) {
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.9, y: 40, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="relative w-full max-w-2xl h-fit max-h-[95vh] bg-silk-white rounded-[2.5rem] shadow-2xl overflow-y-auto overflow-x-hidden custom-scrollbar flex flex-col"
+              className={`relative w-full max-w-2xl h-fit max-h-[95vh] rounded-[2.5rem] shadow-2xl overflow-y-auto overflow-x-hidden custom-scrollbar flex flex-col ${
+                canvasMode ? 'bg-deep-velvet' : 'bg-silk-white'
+              }`}
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Paper texture overlay */}
-              <div className="absolute inset-0 opacity-[0.04] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]" />
+              {/* Paper texture overlay (only for legacy, canvas has its own) */}
+              {!canvasMode && (
+                <div className="absolute inset-0 opacity-[0.04] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]" />
+              )}
 
-              <div className="p-6 md:p-10 min-w-0 w-full">
-                <header className="text-center mb-8">
-                  <span className="text-[9px] uppercase tracking-[0.4em] text-rose-gold/60 mb-2 block font-bold">
-                    Today's Letter
-                  </span>
-                  <h1 className="text-2xl md:text-4xl font-serif text-deep-velvet mb-4 leading-tight break-words">
-                    {letter.title || 'A Secret Letter'}
-                  </h1>
-                  <div className="h-px w-24 bg-gradient-to-r from-transparent via-rose-gold/30 to-transparent mx-auto" />
-                </header>
+              <div className={`min-w-0 w-full ${canvasMode ? 'p-0' : 'p-6 md:p-10'}`}>
+                {/* Header (hidden in canvas mode as it acts like a physical letter) */}
+                {!canvasMode && (
+                  <header className="text-center mb-8">
+                    <span className="text-[9px] uppercase tracking-[0.4em] text-rose-gold/60 mb-2 block font-bold">
+                      Today's Letter
+                    </span>
+                    <h1 className="text-2xl md:text-4xl font-serif text-deep-velvet mb-4 leading-tight break-words">
+                      {letter.title || 'A Secret Letter'}
+                    </h1>
+                    <div className="h-px w-24 bg-gradient-to-r from-transparent via-rose-gold/30 to-transparent mx-auto" />
+                  </header>
+                )}
 
                 {canvasMode ? (
                   /* Canvas-based letter (CanvasElement[] from JSONB) */
-                  <div className="w-full overflow-hidden">
+                  <div className="w-full overflow-hidden flex justify-center items-center">
                     <LetterCanvasRenderer elements={letter.content as any[]} animated />
                   </div>
                 ) : (
@@ -127,13 +134,16 @@ export default function LetterClient({ letter }: LetterClientProps) {
                     dangerouslySetInnerHTML={{ __html: letter.content as string }}
                   />
                 )}
-
               </div>
 
-              <footer className="mt-auto p-6 md:p-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-rose-gold/10 bg-white/40 backdrop-blur-xl">
+              <footer className={`mt-auto p-6 md:p-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-t ${
+                canvasMode ? 'border-white/10 bg-deep-velvet/40 text-white' : 'border-rose-gold/10 bg-white/40'
+              } backdrop-blur-xl`}>
                 <button
                   onClick={() => setIsEnlarged(false)}
-                  className="text-[10px] font-bold uppercase tracking-[0.3em] text-deep-velvet/40 hover:text-deep-velvet transition-colors order-2 sm:order-1"
+                  className={`text-[10px] font-bold uppercase tracking-[0.3em] transition-colors order-2 sm:order-1 ${
+                    canvasMode ? 'text-white/40 hover:text-white' : 'text-deep-velvet/40 hover:text-deep-velvet'
+                  }`}
                 >
                   Close Letter
                 </button>
