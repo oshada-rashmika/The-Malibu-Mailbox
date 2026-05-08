@@ -57,37 +57,41 @@ interface PlacedItem {
 
 const buildClusterLayout = (items: WatercolorFlower[]): PlacedItem[] => {
   const centerX = 50;
-  const centerY = 45; // Center slightly higher to leave room for stems gathering below
+  const centerY = 50; 
   const goldenAngle = 137.5 * (Math.PI / 180);
+  const count = items.length;
 
   const positions = items.map((item, index) => {
     const seed = hashSeed(item.id ?? `${item.flower_type}-${index}`);
     
-    // Dense packing: radius increases slowly
-    const radius = Math.sqrt(index) * 3.5; 
+    // Spread Radius: position flowers at varying distances (e.g., 5% to 35% offset)
+    const t = count > 1 ? index / (count - 1) : 0;
+    const radius = 5 + Math.sqrt(t) * 30; // Maps to a radius between 5 and 35
     const angle = index * goldenAngle;
     
-    // Add small organic jitter
-    const jitterX = gaussian(seed + 5, seed + 11) * 1.5;
-    const jitterY = gaussian(seed + 7, seed + 13) * 1.5;
+    // Add small organic jitter for collision avoidance and natural look
+    const jitterX = gaussian(seed + 5, seed + 11) * 2;
+    const jitterY = gaussian(seed + 7, seed + 13) * 2;
     
-    const xPos = clamp(centerX + Math.cos(angle) * radius + jitterX, 15, 85);
-    const yPos = clamp(centerY + Math.sin(angle) * radius * 0.8 + jitterY, 15, 85); // 0.8 squishes slightly into an ellipse
+    const xPos = clamp(centerX + Math.cos(angle) * radius + jitterX, 10, 90);
+    const yPos = clamp(centerY + Math.sin(angle) * radius + jitterY, 10, 90);
     
-    // Converging stems: tilt inwards towards a "tie point"
-    // (xPos - 50) means items on right rotate clockwise, items on left rotate counter-clockwise.
-    // This makes their stems point inwards to the center bottom.
-    const rotation = (xPos - 50) * 1.6 + lerp(-6, 6, pseudoRandom(seed + 19));
+    // Randomized Rotation (-25deg to 25deg)
+    const rotation = lerp(-25, 25, pseudoRandom(seed + 19));
     
-    // Scale variation
-    const scale = lerp(0.85, 1.15, pseudoRandom(seed + 29));
+    // Scale variation (overall base scale increased in component rendering)
+    const scale = lerp(0.9, 1.3, pseudoRandom(seed + 29));
     
     return { left: xPos, top: yPos, rotation, scale, item, seed, zIndex: 0 };
   });
 
-  // Sort by Y position (top to bottom) so lower items get higher z-index
-  // This natural layering ensures stems of higher items are covered by lower flower heads
-  positions.sort((a, b) => a.top - b.top);
+  // Depth & Layering: Map z-index to distance from center
+  // Furthest flowers in the back (lower z-index), central flowers in the front (higher z-index)
+  positions.sort((a, b) => {
+    const distA = Math.pow(a.left - 50, 2) + Math.pow(a.top - 50, 2);
+    const distB = Math.pow(b.left - 50, 2) + Math.pow(b.top - 50, 2);
+    return distB - distA; // Descending distance
+  });
   
   return positions.map((pos, index) => ({
     ...pos,
@@ -109,17 +113,24 @@ export default function WatercolorBouquet({ flowers, className = '' }: Watercolo
   // Combine user flowers with generated filler foliage
   const allItems = [...flowers, ...fillerLeaves];
   
-  // Get dense packed layout
+  // Shuffle deterministically to interleave leaves and flowers evenly
+  allItems.sort((a, b) => {
+    const seedA = hashSeed(a.id ?? a.flower_type);
+    const seedB = hashSeed(b.id ?? b.flower_type);
+    return seedA - seedB;
+  });
+  
+  // Get balanced spread layout
   const layout = buildClusterLayout(allItems);
 
   return (
     <div className={`relative w-full aspect-square flex items-center justify-center ${className}`}>
       {/* Foundational Base Layer (Depth) */}
-      {/* The background filler leaf acting as the nest */}
+      {/* The background filler leaf acting as the nest, sized to frame the spread */}
       <img
         src="/flowers/leaf.webp"
         alt="Bouquet leaf base"
-        className="absolute inset-0 w-full h-full object-contain scale-[1.38] origin-center z-0 opacity-95"
+        className="absolute inset-0 w-full h-full object-contain scale-[1.48] origin-center z-0 opacity-95"
       />
 
       {/* Intermingled Flowers and Foliage */}
@@ -128,11 +139,11 @@ export default function WatercolorBouquet({ flowers, className = '' }: Watercolo
         const key = item.id ?? `${item.flower_type}-${index}-${seed}`;
         const isFoliage = item.flower_type === 'leaf';
         
-        // Scale down non-foliage flowers significantly. 
-        // Intermingled foliage can be slightly larger.
+        // Increase base scale of non-foliage flowers significantly. 
+        // Intermingled foliage is appropriately sized to fill gaps.
         const widthClass = isFoliage 
-          ? "w-[28%] sm:w-[26%] md:w-[24%]" 
-          : "w-[18%] sm:w-[16%] md:w-[15%]";
+          ? "w-[36%] sm:w-[34%] md:w-[32%]" 
+          : "w-[28%] sm:w-[25%] md:w-[23%]";
 
         return (
           <motion.img
