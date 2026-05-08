@@ -201,29 +201,23 @@ export default function HistoryClient() {
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.9, y: 40, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className={`relative w-full max-w-2xl h-fit max-h-[95vh] rounded-[2.5rem] shadow-2xl overflow-y-auto custom-scrollbar flex flex-col ${
-                isCanvasContent(selectedLetter.content) ? 'bg-deep-velvet' : 'bg-silk-white'
-              }`}
+              className={`relative w-full max-w-2xl h-fit max-h-[95vh] rounded-[2.5rem] shadow-2xl overflow-y-auto overflow-x-hidden custom-scrollbar flex flex-col bg-silk-white`}
               onClick={(e) => e.stopPropagation()}
             >
-              {!isCanvasContent(selectedLetter.content) && (
-                <div className="absolute inset-0 opacity-[0.04] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]" />
-              )}
+              <div className="absolute inset-0 opacity-[0.04] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]" />
               
-              <div className={`min-w-0 w-full ${isCanvasContent(selectedLetter.content) ? 'p-0' : 'p-6 md:p-10'}`}>
-                {!isCanvasContent(selectedLetter.content) && (
-                  <header className="text-center mb-8">
-                    <span className="text-[9px] uppercase tracking-[0.4em] text-rose-gold/60 mb-2 block font-bold">From the Archives</span>
-                    <h1 className="text-2xl md:text-4xl font-serif text-deep-velvet mb-4 leading-tight break-words">
-                      {selectedLetter.title || 'A Secret Letter'}
-                    </h1>
-                    <div className="h-px w-24 bg-gradient-to-r from-transparent via-rose-gold/30 to-transparent mx-auto" />
-                  </header>
-                )}
+              <div className="p-6 md:p-10 min-w-0 w-full">
+                <header className="text-center mb-8">
+                  <span className="text-[9px] uppercase tracking-[0.4em] text-rose-gold/60 mb-2 block font-bold">From the Archives</span>
+                  <h1 className="text-2xl md:text-4xl font-serif text-deep-velvet mb-4 leading-tight break-words">
+                    {selectedLetter.title || 'A Secret Letter'}
+                  </h1>
+                  <div className="h-px w-24 bg-gradient-to-r from-transparent via-rose-gold/30 to-transparent mx-auto" />
+                </header>
 
                 {isCanvasContent(selectedLetter.content) ? (
-                  /* Canvas-based letter */
-                  <div className="w-full overflow-hidden flex justify-center items-center">
+                  /* Canvas-based letter — block layout so ScaleContainer gets full width */
+                  <div className="w-full">
                     <LetterCanvasRenderer elements={selectedLetter.content} animated />
                   </div>
                 ) : (
@@ -235,14 +229,10 @@ export default function HistoryClient() {
                 )}
               </div>
 
-              <footer className={`mt-auto p-6 md:p-8 flex items-center justify-center border-t ${
-                isCanvasContent(selectedLetter.content) ? 'border-white/10 bg-deep-velvet/40' : 'border-rose-gold/10 bg-white/40'
-              } backdrop-blur-xl`}>
+              <footer className="mt-auto p-6 md:p-8 flex items-center justify-center border-t border-rose-gold/10 bg-white/40 backdrop-blur-xl">
                 <button 
                   onClick={() => setSelectedLetter(null)}
-                  className={`text-[10px] font-bold uppercase tracking-[0.3em] transition-colors ${
-                    isCanvasContent(selectedLetter.content) ? 'text-white/40 hover:text-white' : 'text-deep-velvet/40 hover:text-deep-velvet'
-                  }`}
+                  className="text-[10px] font-bold uppercase tracking-[0.3em] text-deep-velvet/40 hover:text-deep-velvet transition-colors"
                 >
                   Close Memory
                 </button>
