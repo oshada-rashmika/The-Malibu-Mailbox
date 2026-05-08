@@ -3,14 +3,30 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { API_BASE_URL } from '../utils/api';
+
+// Lazy-load the canvas renderer
+const LetterCanvasRenderer = dynamic(() => import('./LetterCanvasRenderer'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-[300px] bg-white/5 animate-pulse rounded-2xl flex items-center justify-center">
+      <span className="text-deep-velvet/20 text-xs uppercase tracking-widest">Loading…</span>
+    </div>
+  ),
+});
 
 interface Letter {
   id: string;
   title: string;
-  content: string;
+  content: string | any[];
   scheduled_for: string;
   saved_at: string;
+}
+
+/** Type guard: check if letter content is a canvas element array. */
+function isCanvasContent(content: unknown): content is any[] {
+  return Array.isArray(content);
 }
 
 export default function HistoryClient() {
@@ -199,10 +215,18 @@ export default function HistoryClient() {
                   <div className="h-px w-24 bg-gradient-to-r from-transparent via-rose-gold/30 to-transparent mx-auto" />
                 </header>
 
-                <article 
-                  className="prose prose-md md:prose-lg prose-rose-gold max-w-none text-deep-velvet/90 font-sans leading-relaxed quill-content pb-4 break-words [overflow-wrap:anywhere]"
-                  dangerouslySetInnerHTML={{ __html: selectedLetter.content }}
-                />
+                {isCanvasContent(selectedLetter.content) ? (
+                  /* Canvas-based letter */
+                  <div className="w-full">
+                    <LetterCanvasRenderer elements={selectedLetter.content} />
+                  </div>
+                ) : (
+                  /* Legacy HTML letter */
+                  <article 
+                    className="prose prose-md md:prose-lg prose-rose-gold max-w-none text-deep-velvet/90 font-sans leading-relaxed quill-content pb-4 break-words [overflow-wrap:anywhere]"
+                    dangerouslySetInnerHTML={{ __html: selectedLetter.content as string }}
+                  />
+                )}
               </div>
 
               <footer className="mt-auto p-6 md:p-8 flex items-center justify-center border-t border-rose-gold/10 bg-white/40 backdrop-blur-xl">

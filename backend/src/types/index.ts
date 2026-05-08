@@ -38,6 +38,7 @@ export interface CanvasElement {
   rotation: number;
   content: string;
   style: CanvasElementStyle;
+  zIndex?: number;
 }
 
 // ─── Domain Types ─────────────────────────────────────────────────────────────

@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Rnd } from 'react-rnd';
 import { v4 as uuidv4 } from 'uuid';
 import type { CanvasElement, CanvasElementStyle } from '../types/canvas';
+import { uploadCanvasAsset } from '../utils/canvasUpload';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -13,12 +14,17 @@ const CANVAS_H = 844; // 9:16 (iPhone 14 Pro logical px)
 
 const ASPECT = CANVAS_H / CANVAS_W; // ~2.165
 
-const DEFAULT_FONTS = [
-  'Playfair Display, serif',
-  'Georgia, serif',
-  'Inter, sans-serif',
-  'Dancing Script, cursive',
-  'Lora, serif',
+/** Curated list of romantic / serif / display fonts for the text toolbar. */
+const FONT_LIST = [
+  { label: 'Playfair Display', value: 'Playfair Display, serif' },
+  { label: 'Cormorant Garamond', value: 'Cormorant Garamond, serif' },
+  { label: 'Lora', value: 'Lora, serif' },
+  { label: 'EB Garamond', value: 'EB Garamond, serif' },
+  { label: 'Libre Baskerville', value: 'Libre Baskerville, serif' },
+  { label: 'Great Vibes', value: 'Great Vibes, cursive' },
+  { label: 'Dancing Script', value: 'Dancing Script, cursive' },
+  { label: 'Georgia', value: 'Georgia, serif' },
+  { label: 'Inter', value: 'Inter, sans-serif' },
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -36,6 +42,27 @@ const fromPercent = (pct: number, axis: 'x' | 'y', rendered: { w: number; h: num
 interface LetterCanvasProps {
   elements: CanvasElement[];
   onChange: (elements: CanvasElement[]) => void;
+}
+
+// ─── Toast Component ──────────────────────────────────────────────────────────
+
+function CanvasToast({ message, isError, onDismiss }: { message: string; isError: boolean; onDismiss: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onDismiss, 4000);
+    return () => clearTimeout(t);
+  }, [onDismiss]);
+
+  return (
+    <div
+      className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-[200] px-6 py-3 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-xl border animate-in fade-in slide-in-from-bottom-4 duration-300 ${
+        isError
+          ? 'bg-red-500/90 text-white border-red-400/40'
+          : 'bg-rose-gold text-deep-velvet border-white/20 shadow-rose-gold/40'
+      }`}
+    >
+      {message}
+    </div>
+  );
 }
 
 // ─── Sub-component: single element renderer inside Rnd ───────────────────────
@@ -72,12 +99,169 @@ function ElementContent({ el, scale }: { el: CanvasElement; scale: number }) {
   return null;
 }
 
+// ─── Floating Text Toolbar ───────────────────────────────────────────────────
+
+interface FloatingToolbarProps {
+  el: CanvasElement;
+  renderedSize: { w: number; h: number };
+  scale: number;
+  onUpdate: (id: string, patch: Partial<CanvasElement>) => void;
+}
+
+function FloatingTextToolbar({ el, renderedSize, scale, onUpdate }: FloatingToolbarProps) {
+  const elTop = fromPercent(el.y, 'y', renderedSize);
+  const elLeft = fromPercent(el.x, 'x', renderedSize);
+  const elWidth = fromPercent(el.width, 'x', renderedSize);
+
+  // Position toolbar above the element, or below if too close to the top
+  const toolbarAbove = elTop > 160 * scale;
+  const top = toolbarAbove ? elTop - 8 : elTop + fromPercent(el.height, 'y', renderedSize) + 8;
+
+  return (
+    <div
+      className="absolute z-[60] animate-in fade-in slide-in-from-bottom-2 duration-200"
+      style={{
+        top,
+        left: Math.max(0, Math.min(elLeft, renderedSize.w - 360)),
+        minWidth: Math.min(360, renderedSize.w),
+        transform: toolbarAbove ? 'translateY(-100%)' : 'translateY(0)',
+        pointerEvents: 'auto',
+      }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="bg-[#1a1a1a]/95 backdrop-blur-xl border border-white/15 rounded-2xl p-3 shadow-2xl shadow-black/40">
+        {/* Row 1: Content input */}
+        <div className="mb-2.5">
+          <input
+            type="text"
+            value={el.content}
+            onChange={(e) => onUpdate(el.id, { content: e.target.value })}
+            className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-silk-white text-sm focus:outline-none focus:ring-1 focus:ring-rose-gold/50 placeholder:text-silk-white/20"
+            placeholder="Your text…"
+          />
+        </div>
+
+        {/* Row 2: Font, Size, Color, Align */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Font Family */}
+          <select
+            value={el.style.fontFamily ?? 'Georgia, serif'}
+            onChange={(e) =>
+              onUpdate(el.id, {
+                style: { ...el.style, fontFamily: e.target.value },
+              })
+            }
+            className="px-2 py-1.5 bg-white/5 border border-white/10 rounded-lg text-silk-white text-[11px] focus:outline-none focus:ring-1 focus:ring-rose-gold/40 max-w-[140px]"
+          >
+            {FONT_LIST.map((f) => (
+              <option key={f.value} value={f.value} style={{ fontFamily: f.value }}>
+                {f.label}
+              </option>
+            ))}
+          </select>
+
+          {/* Font Size */}
+          <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-lg px-1.5">
+            <button
+              type="button"
+              onClick={() =>
+                onUpdate(el.id, {
+                  style: { ...el.style, fontSize: Math.max(8, (el.style.fontSize ?? 18) - 1) },
+                })
+              }
+              className="text-silk-white/60 hover:text-silk-white text-sm px-1 py-0.5 transition-colors"
+            >
+              −
+            </button>
+            <input
+              type="number"
+              min={8}
+              max={120}
+              value={el.style.fontSize ?? 18}
+              onChange={(e) =>
+                onUpdate(el.id, {
+                  style: { ...el.style, fontSize: Number(e.target.value) },
+                })
+              }
+              className="w-10 text-center bg-transparent text-silk-white text-[11px] focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            />
+            <button
+              type="button"
+              onClick={() =>
+                onUpdate(el.id, {
+                  style: { ...el.style, fontSize: Math.min(120, (el.style.fontSize ?? 18) + 1) },
+                })
+              }
+              className="text-silk-white/60 hover:text-silk-white text-sm px-1 py-0.5 transition-colors"
+            >
+              +
+            </button>
+          </div>
+
+          {/* Color Picker */}
+          <div className="relative">
+            <input
+              type="color"
+              value={el.style.color ?? '#3f2d25'}
+              onChange={(e) =>
+                onUpdate(el.id, {
+                  style: { ...el.style, color: e.target.value },
+                })
+              }
+              className="w-8 h-8 rounded-lg border border-white/10 bg-transparent cursor-pointer [&::-webkit-color-swatch-wrapper]:p-0.5 [&::-webkit-color-swatch]:rounded-md [&::-webkit-color-swatch]:border-none"
+            />
+          </div>
+
+          {/* Alignment */}
+          <div className="flex gap-0.5 bg-white/5 border border-white/10 rounded-lg p-0.5">
+            {(['left', 'center', 'right'] as const).map((a) => (
+              <button
+                key={a}
+                type="button"
+                onClick={() =>
+                  onUpdate(el.id, {
+                    style: { ...el.style, textAlign: a },
+                  })
+                }
+                className={`px-2 py-1 rounded-md text-[10px] uppercase tracking-wider transition-all ${
+                  (el.style.textAlign ?? 'left') === a
+                    ? 'bg-rose-gold/25 text-rose-gold'
+                    : 'text-silk-white/40 hover:text-silk-white/70'
+                }`}
+              >
+                {a === 'left' ? '⫷' : a === 'center' ? '☰' : '⫸'}
+              </button>
+            ))}
+          </div>
+
+          {/* Rotation */}
+          <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-lg px-2 py-1">
+            <span className="text-[9px] text-silk-white/40">°</span>
+            <input
+              type="number"
+              min={-180}
+              max={180}
+              value={el.rotation}
+              onChange={(e) => onUpdate(el.id, { rotation: Number(e.target.value) })}
+              className="w-10 text-center bg-transparent text-silk-white text-[11px] focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function LetterCanvas({ elements, onChange }: LetterCanvasProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const stickerInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const [renderedSize, setRenderedSize] = useState({ w: CANVAS_W, h: CANVAS_H });
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; isError: boolean } | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   // ── Zoom-to-fit: measure available space and compute the largest canvas that fits ──
   useEffect(() => {
@@ -121,6 +305,62 @@ export default function LetterCanvas({ elements, onChange }: LetterCanvasProps) 
     };
     onChange([...elements, el]);
     setSelectedId(el.id);
+  };
+
+  // ── Upload handler ────────────────────────────────────────────────────────
+
+  const handleFileUpload = async (file: File, type: 'sticker' | 'image') => {
+    setUploading(true);
+    try {
+      const { url } = await uploadCanvasAsset(file, type);
+      const el: CanvasElement = {
+        id: uuidv4(),
+        type,
+        x: 25,
+        y: 30,
+        width: 50,
+        height: type === 'sticker' ? 15 : 25,
+        rotation: 0,
+        content: url,
+        style: { opacity: 1 },
+      };
+      onChange([...elements, el]);
+      setSelectedId(el.id);
+      setToast({ message: `${type === 'sticker' ? 'Sticker' : 'Image'} added to canvas ✨`, isError: false });
+    } catch (err: any) {
+      setToast({ message: err.message || 'Upload failed', isError: true });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'sticker' | 'image') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = ''; // reset so same file can be re-selected
+    handleFileUpload(file, type);
+  };
+
+  // ── Layering ──────────────────────────────────────────────────────────────
+
+  const bringToFront = () => {
+    if (!selectedId) return;
+    const idx = elements.findIndex((el) => el.id === selectedId);
+    if (idx === -1 || idx === elements.length - 1) return;
+    const next = [...elements];
+    const [item] = next.splice(idx, 1);
+    next.push(item);
+    onChange(next);
+  };
+
+  const sendToBack = () => {
+    if (!selectedId) return;
+    const idx = elements.findIndex((el) => el.id === selectedId);
+    if (idx <= 0) return;
+    const next = [...elements];
+    const [item] = next.splice(idx, 1);
+    next.unshift(item);
+    onChange(next);
   };
 
   const deleteSelected = () => {
@@ -169,6 +409,62 @@ export default function LetterCanvas({ elements, onChange }: LetterCanvasProps) 
           <span className="text-base leading-none">T</span> Add Text
         </button>
 
+        {/* Sticker Upload */}
+        <button
+          type="button"
+          onClick={() => stickerInputRef.current?.click()}
+          disabled={uploading}
+          className="flex items-center gap-2 px-5 py-2.5 bg-purple-500/10 border border-purple-400/30 text-purple-300 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-purple-500 hover:text-white transition-all disabled:opacity-40"
+        >
+          <span className="text-base leading-none">✦</span> {uploading ? 'Uploading…' : 'Sticker'}
+        </button>
+        <input
+          ref={stickerInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => onFileChange(e, 'sticker')}
+        />
+
+        {/* Image Upload */}
+        <button
+          type="button"
+          onClick={() => imageInputRef.current?.click()}
+          disabled={uploading}
+          className="flex items-center gap-2 px-5 py-2.5 bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all disabled:opacity-40"
+        >
+          <span className="text-base leading-none">🖼</span> {uploading ? 'Uploading…' : 'Image'}
+        </button>
+        <input
+          ref={imageInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => onFileChange(e, 'image')}
+        />
+
+        {/* Layering controls (when element selected) */}
+        {selectedId && (
+          <div className="flex items-center gap-1.5 ml-1">
+            <button
+              type="button"
+              onClick={bringToFront}
+              title="Bring to Front"
+              className="px-3 py-2.5 bg-white/5 border border-white/10 text-silk-white/60 rounded-lg text-xs hover:bg-white/10 hover:text-silk-white transition-all"
+            >
+              ⬆ Front
+            </button>
+            <button
+              type="button"
+              onClick={sendToBack}
+              title="Send to Back"
+              className="px-3 py-2.5 bg-white/5 border border-white/10 text-silk-white/60 rounded-lg text-xs hover:bg-white/10 hover:text-silk-white transition-all"
+            >
+              ⬇ Back
+            </button>
+          </div>
+        )}
+
         {selectedId && (
           <button
             type="button"
@@ -183,107 +479,6 @@ export default function LetterCanvas({ elements, onChange }: LetterCanvasProps) 
           {renderedSize.w} × {renderedSize.h} px · scale {scale.toFixed(2)}×
         </span>
       </div>
-
-      {/* ── Property Panel (shown when an element is selected) ─────────────── */}
-      {selectedEl && selectedEl.type === 'text' && (
-        <div className="flex flex-wrap gap-4 p-4 bg-white/5 border border-white/10 rounded-2xl animate-in fade-in duration-200">
-          <div className="flex flex-col gap-1">
-            <label className="text-[9px] uppercase tracking-widest text-rose-gold/60">Content</label>
-            <input
-              type="text"
-              value={selectedEl.content}
-              onChange={(e) => updateElement(selectedEl.id, { content: e.target.value })}
-              className="px-3 py-1.5 bg-[#0a0a0a]/60 border border-white/10 rounded-lg text-silk-white text-sm focus:outline-none focus:ring-1 focus:ring-rose-gold/40 min-w-[200px]"
-              placeholder="Your text…"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-[9px] uppercase tracking-widest text-rose-gold/60">Font</label>
-            <select
-              value={selectedEl.style.fontFamily}
-              onChange={(e) =>
-                updateElement(selectedEl.id, {
-                  style: { ...selectedEl.style, fontFamily: e.target.value },
-                })
-              }
-              className="px-3 py-1.5 bg-[#0a0a0a]/60 border border-white/10 rounded-lg text-silk-white text-sm focus:outline-none focus:ring-1 focus:ring-rose-gold/40"
-            >
-              {DEFAULT_FONTS.map((f) => (
-                <option key={f} value={f} style={{ fontFamily: f }}>
-                  {f.split(',')[0]}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-[9px] uppercase tracking-widest text-rose-gold/60">Size (px)</label>
-            <input
-              type="number"
-              min={8}
-              max={120}
-              value={selectedEl.style.fontSize ?? 18}
-              onChange={(e) =>
-                updateElement(selectedEl.id, {
-                  style: { ...selectedEl.style, fontSize: Number(e.target.value) },
-                })
-              }
-              className="px-3 py-1.5 bg-[#0a0a0a]/60 border border-white/10 rounded-lg text-silk-white text-sm focus:outline-none focus:ring-1 focus:ring-rose-gold/40 w-20"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-[9px] uppercase tracking-widest text-rose-gold/60">Color</label>
-            <input
-              type="color"
-              value={selectedEl.style.color ?? '#3f2d25'}
-              onChange={(e) =>
-                updateElement(selectedEl.id, {
-                  style: { ...selectedEl.style, color: e.target.value },
-                })
-              }
-              className="w-10 h-9 rounded-lg border border-white/10 bg-transparent cursor-pointer"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-[9px] uppercase tracking-widest text-rose-gold/60">Rotation °</label>
-            <input
-              type="number"
-              min={-180}
-              max={180}
-              value={selectedEl.rotation}
-              onChange={(e) => updateElement(selectedEl.id, { rotation: Number(e.target.value) })}
-              className="px-3 py-1.5 bg-[#0a0a0a]/60 border border-white/10 rounded-lg text-silk-white text-sm focus:outline-none focus:ring-1 focus:ring-rose-gold/40 w-24"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-[9px] uppercase tracking-widest text-rose-gold/60">Align</label>
-            <div className="flex gap-1">
-              {(['left', 'center', 'right'] as const).map((a) => (
-                <button
-                  key={a}
-                  type="button"
-                  onClick={() =>
-                    updateElement(selectedEl.id, {
-                      style: { ...selectedEl.style, textAlign: a },
-                    })
-                  }
-                  className={`px-3 py-1.5 rounded-lg text-[10px] uppercase tracking-widest border transition-all ${
-                    (selectedEl.style.textAlign ?? 'left') === a
-                      ? 'bg-rose-gold/20 border-rose-gold/40 text-rose-gold'
-                      : 'border-white/10 text-silk-white/40 hover:border-white/20'
-                  }`}
-                >
-                  {a[0].toUpperCase()}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ── Canvas workspace ────────────────────────────────────────────────── */}
       {/* Outer wrapper fills available width and constrains height so zoom-to-fit can work */}
@@ -336,8 +531,8 @@ export default function LetterCanvas({ elements, onChange }: LetterCanvasProps) 
             390 × 844 canvas
           </div>
 
-          {/* Render elements */}
-          {elements.map((el) => {
+          {/* Render elements — array index determines z-order */}
+          {elements.map((el, index) => {
             const px = fromPercent(el.x, 'x', renderedSize);
             const py = fromPercent(el.y, 'y', renderedSize);
             const pw = fromPercent(el.width, 'x', renderedSize);
@@ -356,7 +551,7 @@ export default function LetterCanvas({ elements, onChange }: LetterCanvasProps) 
                 bounds="parent"
                 style={{
                   transform: `rotate(${el.rotation}deg)`,
-                  zIndex: isSelected ? 50 : 10,
+                  zIndex: isSelected ? index + 100 : index + 1,
                   outline: isSelected
                     ? '2px solid rgba(224,191,184,0.8)'
                     : '1px dashed rgba(224,191,184,0)',
@@ -374,6 +569,16 @@ export default function LetterCanvas({ elements, onChange }: LetterCanvasProps) 
               </Rnd>
             );
           })}
+
+          {/* Floating text toolbar — positioned inside the canvas to follow the element */}
+          {selectedEl && selectedEl.type === 'text' && (
+            <FloatingTextToolbar
+              el={selectedEl}
+              renderedSize={renderedSize}
+              scale={scale}
+              onUpdate={updateElement}
+            />
+          )}
 
           {/* Empty state hint */}
           {elements.length === 0 && (
@@ -399,12 +604,21 @@ export default function LetterCanvas({ elements, onChange }: LetterCanvasProps) 
                   fontFamily: 'Georgia, serif',
                 }}
               >
-                Add text to begin
+                Add text, stickers, or images to begin
               </p>
             </div>
           )}
         </div>
       </div>
+
+      {/* Toast notifications */}
+      {toast && (
+        <CanvasToast
+          message={toast.message}
+          isError={toast.isError}
+          onDismiss={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }

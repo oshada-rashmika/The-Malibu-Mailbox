@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { API_BASE_URL } from '../../utils/api';
 import type { CanvasElement } from '../../types/canvas';
+import { listCanvasAssets, deleteCanvasAsset, uploadCanvasAsset, type StoredAsset, type AssetType } from '../../utils/canvasUpload';
 
 // LetterCanvas is client-only (uses ResizeObserver + react-rnd)
 const LetterCanvas = dynamic(() => import('../../components/LetterCanvas'), {
@@ -44,7 +45,59 @@ const formatFlowerLabel = (flower: FlowerOption) =>
   flower === 'Hibiscus' ? 'Hibiscus' : `${flower[0].toUpperCase()}${flower.slice(1)}`;
 
 export default function AdminForms() {
-  const [activeTab, setActiveTab] = useState<'letters' | 'vouchers' | 'flowers' | 'notebook'>('letters');
+  const [activeTab, setActiveTab] = useState<'letters' | 'vouchers' | 'flowers' | 'notebook' | 'assets'>('letters');
+
+  // Assets State
+  const [stickers, setStickers] = useState<StoredAsset[]>([]);
+  const [images, setImages] = useState<StoredAsset[]>([]);
+  const [assetsLoading, setAssetsLoading] = useState(false);
+  const [assetDeleting, setAssetDeleting] = useState<string | null>(null);
+  const assetStickerInputRef = useRef<HTMLInputElement>(null);
+  const assetImageInputRef = useRef<HTMLInputElement>(null);
+
+  const loadAssets = useCallback(async () => {
+    setAssetsLoading(true);
+    try {
+      const [s, i] = await Promise.all([listCanvasAssets('sticker'), listCanvasAssets('image')]);
+      setStickers(s);
+      setImages(i);
+    } catch (err: any) {
+      console.error('Failed to load assets:', err);
+    } finally {
+      setAssetsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'assets') loadAssets();
+  }, [activeTab, loadAssets]);
+
+  const handleAssetDelete = async (path: string) => {
+    setAssetDeleting(path);
+    try {
+      await deleteCanvasAsset(path);
+      setStickers((prev) => prev.filter((a) => a.path !== path));
+      setImages((prev) => prev.filter((a) => a.path !== path));
+      setToast({ show: true, message: 'Asset deleted' });
+      setTimeout(() => setToast({ show: false, message: '' }), 3000);
+    } catch (err: any) {
+      console.error('Delete failed:', err);
+    } finally {
+      setAssetDeleting(null);
+    }
+  };
+
+  const handleAssetUpload = async (file: File, type: AssetType) => {
+    try {
+      await uploadCanvasAsset(file, type);
+      await loadAssets();
+      setToast({ show: true, message: `${type === 'sticker' ? 'Sticker' : 'Image'} uploaded ✨` });
+      setTimeout(() => setToast({ show: false, message: '' }), 3000);
+    } catch (err: any) {
+      setToast({ show: true, message: err.message || 'Upload failed' });
+      setTimeout(() => setToast({ show: false, message: '' }), 4000);
+    }
+  };
 
   // Letter State
   const [letterTitle, setLetterTitle] = useState('');
@@ -345,6 +398,14 @@ export default function AdminForms() {
           }`}
         >
           Notebook Manager
+        </button>
+        <button
+          onClick={() => setActiveTab('assets')}
+          className={`flex-1 sm:flex-none px-8 py-4 rounded-full text-xs font-bold uppercase tracking-widest transition-all z-10 ${
+            activeTab === 'assets' ? 'bg-rose-gold text-deep-velvet' : 'text-silk-white/60 hover:text-silk-white'
+          }`}
+        >
+          Assets {(stickers.length + images.length) > 0 && <span className="ml-1 text-[9px] opacity-60">({stickers.length + images.length})</span>}
         </button>
       </div>
 
@@ -755,6 +816,81 @@ export default function AdminForms() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ----------- ASSETS MANAGER ----------- */}
+      {activeTab === 'assets' && (
+        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          {assetsLoading ? (
+            <div className="p-12 text-center text-silk-white/30 italic font-serif">Loading assets…</div>
+          ) : (
+            <>
+              {/* Stickers Section */}
+              <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 rounded-full bg-purple-500/10 border border-purple-400/20 flex items-center justify-center mr-3">
+                      <span className="text-purple-300 text-lg">✦</span>
+                    </div>
+                    <h2 className="text-xl font-serif text-silk-white">Stickers <span className="text-sm text-silk-white/30">({stickers.length})</span></h2>
+                  </div>
+                  <button type="button" onClick={() => assetStickerInputRef.current?.click()} className="px-4 py-2 bg-purple-500/10 border border-purple-400/30 text-purple-300 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-purple-500 hover:text-white transition-all">
+                    Upload Sticker
+                  </button>
+                  <input ref={assetStickerInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) { handleAssetUpload(f, 'sticker'); e.target.value = ''; } }} />
+                </div>
+                {stickers.length === 0 ? (
+                  <p className="text-sm text-silk-white/20 italic text-center py-6">No stickers uploaded yet.</p>
+                ) : (
+                  <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-4">
+                    {stickers.map((asset) => (
+                      <div key={asset.path} className="group relative bg-[#0a0a0a]/50 border border-white/10 rounded-2xl p-3 flex flex-col items-center gap-2 hover:border-purple-400/40 transition-all">
+                        <img src={asset.url} alt={asset.name} className="w-16 h-16 object-contain" />
+                        <span className="text-[9px] text-silk-white/40 truncate w-full text-center">{asset.name}</span>
+                        <span className="text-[8px] text-silk-white/20">{(asset.size / 1024).toFixed(0)} KB</span>
+                        <button onClick={() => handleAssetDelete(asset.path)} disabled={assetDeleting === asset.path} className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 p-1.5 bg-red-500/80 text-white rounded-full text-[9px] hover:bg-red-600 transition-all disabled:opacity-30" title="Delete">
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Images Section */}
+              <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-2xl">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-400/20 flex items-center justify-center mr-3">
+                      <span className="text-emerald-300 text-lg">🖼</span>
+                    </div>
+                    <h2 className="text-xl font-serif text-silk-white">Images <span className="text-sm text-silk-white/30">({images.length})</span></h2>
+                  </div>
+                  <button type="button" onClick={() => assetImageInputRef.current?.click()} className="px-4 py-2 bg-emerald-500/10 border border-emerald-400/30 text-emerald-300 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all">
+                    Upload Image
+                  </button>
+                  <input ref={assetImageInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) { handleAssetUpload(f, 'image'); e.target.value = ''; } }} />
+                </div>
+                {images.length === 0 ? (
+                  <p className="text-sm text-silk-white/20 italic text-center py-6">No images uploaded yet.</p>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {images.map((asset) => (
+                      <div key={asset.path} className="group relative bg-[#0a0a0a]/50 border border-white/10 rounded-2xl p-3 flex flex-col items-center gap-2 hover:border-emerald-400/40 transition-all">
+                        <img src={asset.url} alt={asset.name} className="w-full h-24 object-cover rounded-lg" />
+                        <span className="text-[9px] text-silk-white/40 truncate w-full text-center">{asset.name}</span>
+                        <span className="text-[8px] text-silk-white/20">{(asset.size / 1024).toFixed(0)} KB</span>
+                        <button onClick={() => handleAssetDelete(asset.path)} disabled={assetDeleting === asset.path} className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 p-1.5 bg-red-500/80 text-white rounded-full text-[9px] hover:bg-red-600 transition-all disabled:opacity-30" title="Delete">
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </div>
       )}
 

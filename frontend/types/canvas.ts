@@ -50,6 +50,13 @@ export interface CanvasElement {
 
   /** Visual style — only applicable fields are required per type. */
   style: CanvasElementStyle;
+
+  /**
+   * Optional explicit z-index hint.
+   * In practice, render order is determined by array position (later = on top).
+   * This field exists for serialization clarity.
+   */
+  zIndex?: number;
 }
 
 // ─── Letter (Canvas-based) ────────────────────────────────────────────────────
