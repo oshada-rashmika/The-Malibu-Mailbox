@@ -2,14 +2,17 @@
 
 import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
-import 'react-quill-new/dist/quill.snow.css';
 import { API_BASE_URL } from '../../utils/api';
+import type { CanvasElement } from '../../types/canvas';
 
-
-// Dynamically import react-quill-new to prevent SSR window reference errors and React 19 findDOMNode issues
-const ReactQuill = dynamic(() => import('react-quill-new'), { 
+// LetterCanvas is client-only (uses ResizeObserver + react-rnd)
+const LetterCanvas = dynamic(() => import('../../components/LetterCanvas'), {
   ssr: false,
-  loading: () => <div className="h-48 w-full bg-white/5 animate-pulse rounded-2xl border border-white/10" />
+  loading: () => (
+    <div className="w-full h-[500px] bg-white/5 animate-pulse rounded-3xl border border-white/10 flex items-center justify-center">
+      <span className="text-silk-white/20 text-xs uppercase tracking-widest">Loading canvas…</span>
+    </div>
+  ),
 });
 
 const FLOWER_OPTIONS = [
@@ -45,7 +48,7 @@ export default function AdminForms() {
 
   // Letter State
   const [letterTitle, setLetterTitle] = useState('');
-  const [letterContent, setLetterContent] = useState('');
+  const [letterElements, setLetterElements] = useState<CanvasElement[]>([]);
   const [letterDate, setLetterDate] = useState('');
   const [letterUserId, setLetterUserId] = useState('');
   const [letterStatus, setLetterStatus] = useState({ loading: false, message: '', isError: false });
@@ -162,19 +165,23 @@ export default function AdminForms() {
 
   const handleLetterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!letterContent || !letterDate) {
-      setLetterStatus({ loading: false, message: 'Content and Date are required.', isError: true });
+    if (!letterDate) {
+      setLetterStatus({ loading: false, message: 'Delivery date is required.', isError: true });
+      return;
+    }
+    if (letterElements.length === 0) {
+      setLetterStatus({ loading: false, message: 'Add at least one canvas element.', isError: true });
       return;
     }
     setLetterStatus({ loading: true, message: 'Scheduling...', isError: false });
     try {
       const res = await fetch(`${API_BASE_URL}/api/admin/letters`, {
-
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: letterTitle,
-          content: letterContent,
+          // JSONB column: send the array directly (not stringified)
+          content: letterElements,
           date: letterDate,
           user_id: letterUserId || null
         })
@@ -185,11 +192,8 @@ export default function AdminForms() {
       }
       setLetterStatus({ loading: false, message: data.message, isError: false });
       setLetterTitle('');
-      setLetterContent('');
+      setLetterElements([]);
       setLetterDate('');
-      // Keep UserID filled to make batch adding easier
-      
-      // Clear success message after 3 seconds
       setTimeout(() => setLetterStatus({ loading: false, message: '', isError: false }), 3000);
     } catch (err: any) {
       setLetterStatus({ loading: false, message: err.message, isError: true });
@@ -354,7 +358,7 @@ export default function AdminForms() {
             <h2 className="text-2xl font-serif text-silk-white">Schedule A Letter</h2>
           </div>
 
-          <div className="space-y-6">
+        <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="block text-xs font-bold uppercase tracking-[0.2em] text-rose-gold/70 ml-1">Title</label>
@@ -378,18 +382,16 @@ export default function AdminForms() {
               </div>
             </div>
 
+            {/* ── Canvas Letter Editor ── */}
             <div className="space-y-2">
-              <label className="block text-xs font-bold uppercase tracking-[0.2em] text-rose-gold/70 ml-1">Letter Body *</label>
-              {/* Wrapping Quill in a specific div to hijack the light theme of standard Quill snow into Noir */}
-              <div className="rounded-2xl border border-white/10 overflow-hidden bg-[#0a0a0a]/50 quill-noir text-silk-white">
-                <ReactQuill 
-                  theme="snow" 
-                  value={letterContent} 
-                  onChange={setLetterContent}
-                  placeholder="Write your story here..."
-                  className="h-64 mb-10" // added mb-10 because quill puts toolbar on top and container extends
-                />
-              </div>
+              <label className="block text-xs font-bold uppercase tracking-[0.2em] text-rose-gold/70 ml-1">Letter Canvas *</label>
+              <p className="text-[10px] text-silk-white/30 uppercase tracking-widest ml-1 mb-3">
+                9:16 · Drag to move · Resize handles · Select then edit properties above
+              </p>
+              <LetterCanvas
+                elements={letterElements}
+                onChange={setLetterElements}
+              />
             </div>
 
             <div className="space-y-2">
