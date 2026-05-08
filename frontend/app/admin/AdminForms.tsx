@@ -12,6 +12,34 @@ const ReactQuill = dynamic(() => import('react-quill-new'), {
   loading: () => <div className="h-48 w-full bg-white/5 animate-pulse rounded-2xl border border-white/10" />
 });
 
+const FLOWER_OPTIONS = [
+  'blue',
+  'cornflower',
+  'flower',
+  'Hibiscus',
+  'lily',
+  'poppy',
+  'purple',
+  'rose',
+  'sunflower',
+  'tulip'
+] as const;
+
+const FLOWER_CHUNK_SIZE = 10;
+
+type FlowerOption = (typeof FLOWER_OPTIONS)[number];
+
+const createEmptyFlowerCounts = (): Record<FlowerOption, number> => {
+  const counts = {} as Record<FlowerOption, number>;
+  FLOWER_OPTIONS.forEach((flower) => {
+    counts[flower] = 0;
+  });
+  return counts;
+};
+
+const formatFlowerLabel = (flower: FlowerOption) =>
+  flower === 'Hibiscus' ? 'Hibiscus' : `${flower[0].toUpperCase()}${flower.slice(1)}`;
+
 export default function AdminForms() {
   const [activeTab, setActiveTab] = useState<'letters' | 'vouchers' | 'flowers' | 'notebook'>('letters');
 
@@ -29,11 +57,12 @@ export default function AdminForms() {
   const [voucherUserId, setVoucherUserId] = useState('');
   const [voucherStatus, setVoucherStatus] = useState({ loading: false, message: '', isError: false });
 
-  // Flower State
-  const [flowerType, setFlowerType] = useState('Rose');
-  const [flowerMeaning, setFlowerMeaning] = useState('');
-  const [flowerColor, setFlowerColor] = useState('#e11d48');
-  const [flowerUserId, setFlowerUserId] = useState('');
+  // Bouquet State
+  const [noteTo, setNoteTo] = useState('');
+  const [noteFrom, setNoteFrom] = useState('');
+  const [romanticMessage, setRomanticMessage] = useState('');
+  const [bouquetUserId, setBouquetUserId] = useState('');
+  const [flowerCounts, setFlowerCounts] = useState<Record<FlowerOption, number>>(createEmptyFlowerCounts);
   const [flowerStatus, setFlowerStatus] = useState({ loading: false, message: '', isError: false });
 
   // Notebook State
@@ -44,6 +73,28 @@ export default function AdminForms() {
 
   const ADMIN_ID = '4245ce5a-0f2a-4716-a2ff-d3993d5a5700';
   const SENURI_ID = '6cbc990d-8540-4df5-b73c-9662e4e341d1';
+
+  const totalFlowers = FLOWER_OPTIONS.reduce((sum, flower) => sum + flowerCounts[flower], 0);
+  const bouquetCount = totalFlowers > 0 ? Math.ceil(totalFlowers / FLOWER_CHUNK_SIZE) : 0;
+
+  const adjustFlowerCount = (flower: FlowerOption, delta: number) => {
+    setFlowerCounts((prev) => {
+      const next = { ...prev };
+      next[flower] = Math.max(0, (next[flower] || 0) + delta);
+      return next;
+    });
+  };
+
+  const resetFlowerSelection = () => {
+    setFlowerCounts(createEmptyFlowerCounts());
+  };
+
+  const resetBouquetForm = () => {
+    setNoteTo('');
+    setNoteFrom('');
+    setRomanticMessage('');
+    setFlowerCounts(createEmptyFlowerCounts());
+  };
 
   React.useEffect(() => {
     if (activeTab === 'notebook') {
@@ -180,30 +231,75 @@ export default function AdminForms() {
 
   const handleFlowerSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!flowerType || !flowerMeaning || !flowerColor || !flowerUserId) {
-      setFlowerStatus({ loading: false, message: 'All flower fields and recipient ID are required.', isError: true });
+    const trimmedNoteTo = noteTo.trim();
+    const trimmedNoteFrom = noteFrom.trim();
+    const trimmedMessage = romanticMessage.trim();
+    const trimmedUserId = bouquetUserId.trim();
+    const flowers = FLOWER_OPTIONS.flatMap((flower) =>
+      Array.from({ length: flowerCounts[flower] }, () => flower)
+    );
+
+    if (!trimmedNoteTo || !trimmedNoteFrom || !trimmedMessage) {
+      setFlowerStatus({
+        loading: false,
+        message: 'Note to, note from, and message are required.',
+        isError: true
+      });
       return;
     }
-    setFlowerStatus({ loading: true, message: 'Minting seed...', isError: false });
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/flowers`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          flower_type: flowerType,
-          meaning: flowerMeaning,
-          color_hex: flowerColor,
-          recipient_id: flowerUserId.trim()
-        })
+
+    if (!trimmedUserId) {
+      setFlowerStatus({
+        loading: false,
+        message: 'Recipient user ID is required.',
+        isError: true
       });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.message || 'Failed to mint flower');
+      return;
+    }
+
+    if (flowers.length === 0) {
+      setFlowerStatus({
+        loading: false,
+        message: 'Select at least one flower for the bouquet.',
+        isError: true
+      });
+      return;
+    }
+
+    setFlowerStatus({ loading: true, message: 'Arranging bouquet(s)...', isError: false });
+    try {
+      const chunks: FlowerOption[][] = [];
+      for (let i = 0; i < flowers.length; i += FLOWER_CHUNK_SIZE) {
+        chunks.push(flowers.slice(i, i + FLOWER_CHUNK_SIZE) as FlowerOption[]);
       }
-      setFlowerStatus({ loading: false, message: data.message, isError: false });
-      setFlowerMeaning('');
-      // flowerType and color remain to make batch adding easier
-      
+
+      for (const chunk of chunks) {
+        const res = await fetch(`${API_BASE_URL}/api/admin/bouquets`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            note_to: trimmedNoteTo,
+            note_from: trimmedNoteFrom,
+            message: trimmedMessage,
+            recipient_id: trimmedUserId,
+            flowers: chunk
+          })
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success) {
+          throw new Error(data.message || 'Failed to create bouquet');
+        }
+      }
+
+      const suffix = chunks.length === 1 ? '' : 's';
+      setFlowerStatus({
+        loading: false,
+        message: `Bouquet${suffix} created (${chunks.length}).`,
+        isError: false
+      });
+      resetBouquetForm();
+
       setTimeout(() => setFlowerStatus({ loading: false, message: '', isError: false }), 3000);
     } catch (err: any) {
       setFlowerStatus({ loading: false, message: err.message, isError: true });
@@ -411,53 +507,44 @@ export default function AdminForms() {
             <div className="w-12 h-12 rounded-full bg-rose-gold/10 border border-rose-gold/20 flex items-center justify-center mr-4">
               <span className="text-rose-gold font-serif text-xl">❀</span>
             </div>
-            <h2 className="text-2xl font-serif text-silk-white">Mint a Flower</h2>
+            <h2 className="text-2xl font-serif text-silk-white">Compose a Bouquet</h2>
           </div>
 
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="block text-xs font-bold uppercase tracking-[0.2em] text-rose-gold/70 ml-1">Flower Type *</label>
-                <select
-                  value={flowerType}
-                  onChange={(e) => setFlowerType(e.target.value)}
-                  className="w-full px-5 py-3 bg-[#0a0a0a]/50 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-gold/50 focus:border-rose-gold transition-colors text-silk-white"
-                >
-                  <option value="Rose">Rose</option>
-                  <option value="Tulip">Tulip</option>
-                  <option value="Lily">Lily</option>
-                  <option value="Sunflower">Sunflower</option>
-                  <option value="Orchid">Orchid</option>
-                </select>
+                <label className="block text-xs font-bold uppercase tracking-[0.2em] text-rose-gold/70 ml-1">Note To *</label>
+                <input
+                  type="text"
+                  value={noteTo}
+                  onChange={(e) => setNoteTo(e.target.value)}
+                  placeholder="e.g. For Senuri"
+                  required
+                  className="w-full px-5 py-3 bg-[#0a0a0a]/50 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-gold/50 focus:border-rose-gold transition-colors text-silk-white placeholder:text-silk-white/20"
+                />
               </div>
               <div className="space-y-2">
-                <label className="block text-xs font-bold uppercase tracking-[0.2em] text-rose-gold/70 ml-1">Color Palette (Hex) *</label>
-                <div className="flex bg-[#0a0a0a]/50 border border-white/10 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-rose-gold/50 focus-within:border-rose-gold transition-colors h-[50px]">
-                  <input
-                    type="color"
-                    value={flowerColor}
-                    onChange={(e) => setFlowerColor(e.target.value)}
-                    className="h-full w-14 border-0 p-0 m-0 bg-transparent cursor-pointer"
-                  />
-                  <input 
-                    type="text"
-                    value={flowerColor}
-                    onChange={(e) => setFlowerColor(e.target.value)}
-                    placeholder="#FFFFFF"
-                    className="w-full px-4 py-3 bg-transparent border-0 focus:outline-none text-silk-white placeholder:text-silk-white/20 font-mono tracking-widest text-sm uppercase"
-                  />
-                </div>
+                <label className="block text-xs font-bold uppercase tracking-[0.2em] text-rose-gold/70 ml-1">Note From *</label>
+                <input
+                  type="text"
+                  value={noteFrom}
+                  onChange={(e) => setNoteFrom(e.target.value)}
+                  placeholder="e.g. With all my heart"
+                  required
+                  className="w-full px-5 py-3 bg-[#0a0a0a]/50 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-gold/50 focus:border-rose-gold transition-colors text-silk-white placeholder:text-silk-white/20"
+                />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="block text-xs font-bold uppercase tracking-[0.2em] text-rose-gold/70 ml-1">Meaning (Tooltip) *</label>
+              <label className="block text-xs font-bold uppercase tracking-[0.2em] text-rose-gold/70 ml-1">Romantic Card Message *</label>
               <textarea
-                value={flowerMeaning}
-                onChange={(e) => setFlowerMeaning(e.target.value)}
-                placeholder="e.g. Perfect Happiness"
-                rows={3}
-                className="w-full px-5 py-3 bg-[#0a0a0a]/50 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-gold/50 focus:border-rose-gold transition-colors text-silk-white placeholder:text-silk-white/20 resize-none font-serif italic"
+                value={romanticMessage}
+                onChange={(e) => setRomanticMessage(e.target.value)}
+                placeholder="Write the romantic card that sits with the bouquet..."
+                rows={4}
+                required
+                className="w-full px-5 py-4 bg-[#0a0a0a]/50 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-gold/50 focus:border-rose-gold transition-colors text-silk-white placeholder:text-silk-white/20 resize-none"
               />
             </div>
 
@@ -465,12 +552,88 @@ export default function AdminForms() {
               <label className="block text-xs font-bold uppercase tracking-[0.2em] text-rose-gold/70 ml-1">Recipient User ID *</label>
               <input
                 type="text"
-                value={flowerUserId}
-                onChange={(e) => setFlowerUserId(e.target.value)}
+                value={bouquetUserId}
+                onChange={(e) => setBouquetUserId(e.target.value)}
                 placeholder="UUID of the recipient..."
                 required
                 className="w-full px-5 py-3 bg-[#0a0a0a]/50 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-gold/50 focus:border-rose-gold transition-colors text-silk-white placeholder:text-silk-white/20"
               />
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-bold uppercase tracking-[0.2em] text-rose-gold/70 ml-1">Watercolor Flower Selector *</label>
+                <span className="text-[10px] uppercase tracking-[0.2em] text-silk-white/40">
+                  Leaf base auto-included
+                </span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                {FLOWER_OPTIONS.map((flower) => {
+                  const count = flowerCounts[flower];
+                  return (
+                    <button
+                      key={flower}
+                      type="button"
+                      onClick={() => adjustFlowerCount(flower, 1)}
+                      className="relative bg-[#0a0a0a]/50 border border-white/10 rounded-2xl p-3 flex flex-col items-center gap-2 hover:border-rose-gold/40 hover:bg-white/5 transition-all"
+                    >
+                      <img
+                        src={`/flowers/${flower}.png`}
+                        alt={`${formatFlowerLabel(flower)} watercolor`}
+                        className="w-14 h-14 object-contain"
+                      />
+                      <span className="text-[11px] uppercase tracking-[0.2em] text-silk-white/70">
+                        {formatFlowerLabel(flower)}
+                      </span>
+                      {count > 0 && (
+                        <span className="absolute -top-2 -right-2 bg-rose-gold text-deep-velvet text-[10px] font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-lg">
+                          {count}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {totalFlowers > 0 ? (
+                <div className="flex flex-wrap gap-2 pt-2">
+                  {FLOWER_OPTIONS.filter((flower) => flowerCounts[flower] > 0).map((flower) => (
+                    <div
+                      key={flower}
+                      className="flex items-center gap-2 px-3 py-2 bg-white/5 border border-white/10 rounded-full"
+                    >
+                      <span className="text-[10px] uppercase tracking-[0.2em] text-silk-white/70">
+                        {formatFlowerLabel(flower)}
+                      </span>
+                      <span className="text-[10px] font-bold text-rose-gold">{flowerCounts[flower]}</span>
+                      <button
+                        type="button"
+                        onClick={() => adjustFlowerCount(flower, -1)}
+                        className="px-2 py-1 text-[9px] uppercase tracking-[0.2em] text-rose-gold/80 hover:text-rose-gold"
+                      >
+                        -
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-silk-white/30 italic">
+                  Select the watercolor flowers to build the bouquet.
+                </p>
+              )}
+
+              <div className="flex flex-wrap items-center justify-between gap-4 pt-2 text-[10px] uppercase tracking-[0.2em] text-silk-white/40">
+                <span>
+                  Selected: {totalFlowers} | Bouquets: {bouquetCount || 0} | Max 10 per bouquet
+                </span>
+                <button
+                  type="button"
+                  onClick={resetFlowerSelection}
+                  className="px-3 py-1 border border-rose-gold/30 rounded-full text-rose-gold/70 hover:text-rose-gold hover:border-rose-gold transition-colors"
+                >
+                  Clear
+                </button>
+              </div>
             </div>
 
             <div className="pt-4 flex items-center justify-between">
@@ -486,7 +649,7 @@ export default function AdminForms() {
                 disabled={flowerStatus.loading}
                 className="px-8 py-4 bg-rose-gold text-deep-velvet rounded-xl font-bold tracking-[0.2em] uppercase text-xs shadow-lg shadow-rose-gold/10 hover:scale-[1.02] hover:bg-white transition-all duration-300 disabled:opacity-50 disabled:scale-100"
               >
-                {flowerStatus.loading ? 'Minting...' : 'Mint Flower'}
+                {flowerStatus.loading ? 'Arranging...' : 'Create Bouquet'}
               </button>
             </div>
           </div>
