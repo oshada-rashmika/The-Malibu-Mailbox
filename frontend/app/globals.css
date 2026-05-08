@@ -161,6 +161,7 @@ body {
 
 /* ── Canvas Legacy HTML (Quill-generated content) ─────────────────────────── */
 .canvas-legacy-html p {
+  display: block;
   margin: 0 0 1em 0;
   padding: 0;
   line-height: 1.6;
