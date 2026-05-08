@@ -133,7 +133,9 @@ const buildLayout = (items: WatercolorFlower[]): PlacedItem[] => {
   // Counters per tier to generate distinct angles within the band
   const tierCounts: Record<Tier, number> = { 1: 0, 2: 0, 3: 0, 4: 0 };
 
-  const placed: PlacedItem[] = items.map((item) => {
+  const placed: PlacedItem[] = [];
+
+  items.forEach((item) => {
     const tier = getTier(normalizeFlowerType(item.flower_type));
     const idx  = tierCounts[tier]++;
     const seed = hashSeed(item.id ?? `${item.flower_type}-${tier}-${idx}`);
@@ -151,14 +153,13 @@ const buildLayout = (items: WatercolorFlower[]): PlacedItem[] => {
     let left = clamp(CX + Math.cos(angle) * radius + jx, 14, 86);
     let top  = clamp(CY + Math.sin(angle) * radius + jy, 14, 86);
 
-    // ── Anti-clump: nudge away from every already-placed flower ─────────────
-    // Only run for same-tier neighbours — we WANT cross-tier overlap (depth).
-    // Up to 20 iterations is enough to resolve dense packs.
+    // ── Anti-clump: nudge away from every already-placed same-tier flower ───
+    // Cross-tier overlap is intentional (depth); only prevent same-tier stacking.
     let attempts = 0;
     while (attempts < 20) {
       let tooClose = false;
       for (const p of placed) {
-        if (p.tier !== tier) continue; // cross-tier overlap is intentional
+        if (p.tier !== tier) continue;
         const dx   = left - p.left;
         const dy   = top  - p.top;
         const dist = Math.sqrt(dx * dx + dy * dy);
@@ -183,7 +184,7 @@ const buildLayout = (items: WatercolorFlower[]): PlacedItem[] => {
     const scaleBand = TIER_SCALE[tier];
     const scale     = lerp(scaleBand[0], scaleBand[1], rng(seed + 29));
 
-    return { item, left, top, rotation, scale, zIndex: 0, seed, tier };
+    placed.push({ item, left, top, rotation, scale, zIndex: 0, seed, tier });
   });
 
   // ── Assign z-indices by tier (Tier 1 = highest, Tier 4 = lowest) ──────────
@@ -246,7 +247,7 @@ export default function WatercolorBouquet({ flowers, className = '' }: Watercolo
       <img
         src="/flowers/leaf.webp"
         alt="Bouquet leaf base"
-        className="absolute inset-0 w-full h-full object-contain z-0 opacity-97"
+        className="absolute inset-0 w-full h-full object-contain z-0 opacity-95"
         style={{ transform: 'scale(1.42)', transformOrigin: 'center 55%' }}
       />
 
