@@ -184,13 +184,13 @@ export default function BoutiqueClient({ userId }: { userId: string }) {
                   }}
                   className="w-full"
                 >
-                  <div className="flex flex-col items-center gap-8 lg:flex-row lg:items-start lg:gap-12">
-                    <div className="w-full lg:w-3/5">
-                      <div className="w-full max-w-md sm:max-w-lg mx-auto">
+                  <div className="flex flex-col items-center gap-10 sm:gap-12 w-full max-w-2xl mx-auto">
+                    <div className="w-full">
+                      <div className="w-full max-w-xs sm:max-w-md mx-auto">
                         <WatercolorBouquet flowers={activeBouquet.flowers} />
                       </div>
                     </div>
-                    <div className="w-full lg:w-2/5">
+                    <div className="w-full">
                       <RomanticCard
                         noteTo={activeBouquet.note_to}
                         noteFrom={activeBouquet.note_from}
