@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import type { BouquetFlower, FlowerType } from '../types';
 import { supabase } from '../config/supabase';
 
 const router = Router();
@@ -17,6 +18,11 @@ const ALLOWED_FLOWER_TYPES = new Set([
   'sunflower',
   'tulip'
 ]);
+
+type RawFlower = string | { flower_type?: string };
+type BouquetFlowerInsert = Omit<BouquetFlower, 'id'>;
+
+const isFlowerType = (flower: string): flower is FlowerType => ALLOWED_FLOWER_TYPES.has(flower);
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
@@ -60,9 +66,9 @@ const buildBouquetLayout = (count: number) => {
   });
 };
 
-const buildBouquetFlowers = (bouquetId: string, flowers: string[]) => {
+const buildBouquetFlowers = (bouquetId: string, flowers: FlowerType[]): BouquetFlowerInsert[] => {
   const layout = buildBouquetLayout(flowers.length);
-  const arranged = flowers.map((flower, index) => ({
+  const arranged = flowers.map((flower: FlowerType, index) => ({
     bouquet_id: bouquetId,
     flower_type: flower,
     ...layout[index]
@@ -197,10 +203,14 @@ router.post('/bouquets', async (req, res, next) => {
     const noteFrom = typeof req.body.note_from === 'string' ? req.body.note_from.trim() : '';
     const message = typeof req.body.message === 'string' ? req.body.message.trim() : '';
     const recipientId = typeof req.body.recipient_id === 'string' ? req.body.recipient_id.trim() : '';
-    const rawFlowers = Array.isArray(req.body.flowers) ? req.body.flowers : [];
-    const flowers = rawFlowers
-      .map((flower) => (typeof flower === 'string' ? flower.trim() : ''))
-      .filter(Boolean);
+    const rawFlowers = Array.isArray(req.body.flowers) ? (req.body.flowers as RawFlower[]) : [];
+    const normalizedFlowers = rawFlowers
+      .map((flower: RawFlower) => {
+        if (typeof flower === 'string') return flower.trim();
+        if (flower && typeof flower.flower_type === 'string') return flower.flower_type.trim();
+        return '';
+      })
+      .filter((flower): flower is string => flower.length > 0);
 
     if (!noteTo || !noteFrom || !message) {
       return res.status(400).json({
@@ -216,20 +226,22 @@ router.post('/bouquets', async (req, res, next) => {
       });
     }
 
-    if (flowers.length === 0) {
+    if (normalizedFlowers.length === 0) {
       return res.status(400).json({
         success: false,
         message: 'At least one flower type is required.'
       });
     }
 
-    const invalidFlower = flowers.find((flower) => !ALLOWED_FLOWER_TYPES.has(flower));
+    const invalidFlower = normalizedFlowers.find((flower: string) => !isFlowerType(flower));
     if (invalidFlower) {
       return res.status(400).json({
         success: false,
         message: `Invalid flower type: ${invalidFlower}.`
       });
     }
+
+    const flowers = normalizedFlowers.filter(isFlowerType);
 
     const chunks: string[][] = [];
     for (let i = 0; i < flowers.length; i += FLOWER_CHUNK_SIZE) {
