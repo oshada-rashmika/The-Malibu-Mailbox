@@ -128,6 +128,7 @@ function RenderElement({ el, index, animated }: RenderElementProps) {
     height,
     zIndex: index + 1,
     pointerEvents: 'none',
+    boxSizing: 'border-box',
   };
 
   // Wrapper: motion.div handles the bloom animation + rotation
@@ -138,28 +139,42 @@ function RenderElement({ el, index, animated }: RenderElementProps) {
     : { style: { ...positionStyle, transform: `rotate(${el.rotation}deg)` } };
 
   if (el.type === 'text') {
+    // Detect if content contains HTML tags (legacy Quill content)
+    const isHtml = /<[a-z][\s\S]*>/i.test(el.content);
+
+    const textStyle: React.CSSProperties = {
+      width: '100%',
+      height: '100%',
+      boxSizing: 'border-box',
+      padding: 16,
+      fontSize: `${el.style.fontSize ?? 16}px`,
+      color: el.style.color ?? '#1a1a1a',
+      fontFamily: el.style.fontFamily ?? 'Georgia, serif',
+      fontWeight: el.style.fontWeight ?? '400',
+      textAlign: (el.style.textAlign as React.CSSProperties['textAlign']) ?? 'left',
+      opacity: el.style.opacity ?? 1,
+      overflow: 'hidden',
+      overflowWrap: 'break-word',
+      whiteSpace: 'pre-wrap',
+      wordBreak: 'break-word',
+      userSelect: 'text',
+      lineHeight: 1.6,
+    };
+
     return (
       // @ts-expect-error -- motion.div and div have compatible props here
       <Wrapper {...wrapperProps}>
-        <div
-          style={{
-            width: '100%',
-            height: '100%',
-            fontSize: `${el.style.fontSize ?? 16}px`,
-            color: el.style.color ?? '#1a1a1a',
-            fontFamily: el.style.fontFamily ?? 'Georgia, serif',
-            fontWeight: el.style.fontWeight ?? '400',
-            textAlign: (el.style.textAlign as React.CSSProperties['textAlign']) ?? 'left',
-            opacity: el.style.opacity ?? 1,
-            overflow: 'hidden',
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-word',
-            userSelect: 'text',
-            lineHeight: 1.4,
-          }}
-        >
-          {el.content}
-        </div>
+        {isHtml ? (
+          <div
+            style={textStyle}
+            dangerouslySetInnerHTML={{ __html: el.content }}
+            className="canvas-legacy-html"
+          />
+        ) : (
+          <div style={textStyle}>
+            {el.content}
+          </div>
+        )}
       </Wrapper>
     );
   }

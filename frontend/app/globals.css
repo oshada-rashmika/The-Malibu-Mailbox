@@ -158,3 +158,48 @@ body {
 @utility shadow-malibu-glow {
   box-shadow: 0 0 20px rgba(224, 191, 184, 0.4), 0 0 40px rgba(224, 191, 184, 0.2);
 }
+
+/* ── Canvas Legacy HTML (Quill-generated content) ─────────────────────────── */
+.canvas-legacy-html p {
+  margin: 0 0 0.75em 0;
+  padding: 0;
+}
+
+.canvas-legacy-html p:last-child {
+  margin-bottom: 0;
+}
+
+.canvas-legacy-html strong,
+.canvas-legacy-html b {
+  font-weight: 700;
+}
+
+.canvas-legacy-html em,
+.canvas-legacy-html i {
+  font-style: italic;
+}
+
+.canvas-legacy-html u {
+  text-decoration: underline;
+}
+
+.canvas-legacy-html a {
+  color: #a57070;
+  text-decoration: underline;
+}
+
+.canvas-legacy-html br {
+  display: block;
+  content: '';
+  margin-top: 0.25em;
+}
+
+.canvas-legacy-html ul,
+.canvas-legacy-html ol {
+  margin: 0 0 0.75em 1.5em;
+  padding: 0;
+}
+
+.canvas-legacy-html li {
+  margin-bottom: 0.25em;
+}
