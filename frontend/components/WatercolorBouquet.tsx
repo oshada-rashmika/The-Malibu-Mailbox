@@ -45,66 +45,101 @@ const gaussian = (seedA: number, seedB: number) => {
   return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
 };
 
-const buildClusterLayout = (flowers: WatercolorFlower[]) => {
-  const count = flowers.length;
+interface PlacedItem {
+  item: WatercolorFlower;
+  left: number;
+  top: number;
+  rotation: number;
+  scale: number;
+  zIndex: number;
+  seed: number;
+}
+
+const buildClusterLayout = (items: WatercolorFlower[]): PlacedItem[] => {
   const centerX = 50;
-  const centerY = 50;
-  const maxRadius = 21;
+  const centerY = 45; // Center slightly higher to leave room for stems gathering below
   const goldenAngle = 137.5 * (Math.PI / 180);
-  const typeCounts = new Map<string, number>();
 
-  return flowers.map((flower, index) => {
-    const typeIndex = typeCounts.get(flower.flower_type) ?? 0;
-    typeCounts.set(flower.flower_type, typeIndex + 1);
-
-    const seed = hashSeed(flower.id ?? `${flower.flower_type}-${index}`);
-    const t = count > 1 ? (index + 1) / count : 0;
-    const radius = Math.sqrt(t) * maxRadius + typeIndex * 2.2;
-    const angle = index * goldenAngle + typeIndex * 0.8 + pseudoRandom(seed + 3) * 0.35;
-    const jitterX = gaussian(seed + 5, seed + 11) * 3.1;
-    const jitterY = gaussian(seed + 7, seed + 13) * 2.7;
-    const xPos = clamp(centerX + Math.cos(angle) * radius + jitterX, 26, 74);
-    const yPos = clamp(centerY + Math.sin(angle) * radius * 0.88 + jitterY, 28, 76);
-    const rotation = lerp(-30, 30, pseudoRandom(seed + 19));
-    const scale = lerp(0.7, 1.2, pseudoRandom(seed + 29));
-
-    return {
-      left: xPos,
-      top: yPos,
-      rotation,
-      scale,
-      zIndex: 10 + index
-    };
+  const positions = items.map((item, index) => {
+    const seed = hashSeed(item.id ?? `${item.flower_type}-${index}`);
+    
+    // Dense packing: radius increases slowly
+    const radius = Math.sqrt(index) * 3.5; 
+    const angle = index * goldenAngle;
+    
+    // Add small organic jitter
+    const jitterX = gaussian(seed + 5, seed + 11) * 1.5;
+    const jitterY = gaussian(seed + 7, seed + 13) * 1.5;
+    
+    const xPos = clamp(centerX + Math.cos(angle) * radius + jitterX, 15, 85);
+    const yPos = clamp(centerY + Math.sin(angle) * radius * 0.8 + jitterY, 15, 85); // 0.8 squishes slightly into an ellipse
+    
+    // Converging stems: tilt inwards towards a "tie point"
+    // (xPos - 50) means items on right rotate clockwise, items on left rotate counter-clockwise.
+    // This makes their stems point inwards to the center bottom.
+    const rotation = (xPos - 50) * 1.6 + lerp(-6, 6, pseudoRandom(seed + 19));
+    
+    // Scale variation
+    const scale = lerp(0.85, 1.15, pseudoRandom(seed + 29));
+    
+    return { left: xPos, top: yPos, rotation, scale, item, seed, zIndex: 0 };
   });
+
+  // Sort by Y position (top to bottom) so lower items get higher z-index
+  // This natural layering ensures stems of higher items are covered by lower flower heads
+  positions.sort((a, b) => a.top - b.top);
+  
+  return positions.map((pos, index) => ({
+    ...pos,
+    zIndex: 10 + index
+  }));
 };
 
 export default function WatercolorBouquet({ flowers, className = '' }: WatercolorBouquetProps) {
-  const orderedFlowers = [...flowers];
-  const clusterLayout = buildClusterLayout(orderedFlowers);
+  // Generate a few filler leaves to intermingle among the flowers
+  const leavesCount = Math.max(3, Math.floor(flowers.length / 1.5));
+  const fillerLeaves: WatercolorFlower[] = Array.from({ length: leavesCount }).map((_, i) => ({
+    id: `filler-leaf-${i}`,
+    flower_type: 'leaf',
+    x_pos: 0,
+    y_pos: 0,
+    rotation: 0
+  }));
+  
+  // Combine user flowers with generated filler foliage
+  const allItems = [...flowers, ...fillerLeaves];
+  
+  // Get dense packed layout
+  const layout = buildClusterLayout(allItems);
 
   return (
-    <div className={`relative w-full aspect-square ${className}`}>
+    <div className={`relative w-full aspect-square flex items-center justify-center ${className}`}>
+      {/* Foundational Base Layer (Depth) */}
+      {/* The background filler leaf acting as the nest */}
       <img
         src="/flowers/leaf.webp"
         alt="Bouquet leaf base"
-        className="absolute inset-0 w-full h-full object-contain scale-[1.32] origin-center z-0"
+        className="absolute inset-0 w-full h-full object-contain scale-[1.38] origin-center z-0 opacity-95"
       />
 
-      {orderedFlowers.map((flower, index) => {
-        const key = flower.id ?? `${flower.flower_type}-${index}`;
-        const placement = clusterLayout[index];
-        const rotation = placement?.rotation ?? 0;
-        const scale = placement?.scale ?? 1;
-        const zIndex = placement?.zIndex ?? index + 1;
-        const left = placement?.left ?? 50;
-        const top = placement?.top ?? 50;
+      {/* Intermingled Flowers and Foliage */}
+      {layout.map((placement, index) => {
+        const { item, left, top, rotation, scale, zIndex, seed } = placement;
+        const key = item.id ?? `${item.flower_type}-${index}-${seed}`;
+        const isFoliage = item.flower_type === 'leaf';
+        
+        // Scale down non-foliage flowers significantly. 
+        // Intermingled foliage can be slightly larger.
+        const widthClass = isFoliage 
+          ? "w-[28%] sm:w-[26%] md:w-[24%]" 
+          : "w-[18%] sm:w-[16%] md:w-[15%]";
 
         return (
           <motion.img
             key={key}
-            src={`/flowers/${normalizeFlowerType(flower.flower_type)}.webp`}
-            alt={flower.flower_type}
-            className="absolute w-[44%] sm:w-[41%] md:w-[38%] lg:w-[36%] object-contain -translate-x-1/2 -translate-y-1/2"
+            src={`/flowers/${normalizeFlowerType(item.flower_type)}.webp`}
+            alt={item.flower_type}
+            className={`absolute ${widthClass} object-contain -translate-x-1/2 -translate-y-1/2`}
             style={{
               left: `${left}%`,
               top: `${top}%`,
@@ -112,9 +147,9 @@ export default function WatercolorBouquet({ flowers, className = '' }: Watercolo
               scale,
               zIndex
             }}
-            initial={{ opacity: 0, scale: scale * 0.75, y: 8 }}
+            initial={{ opacity: 0, scale: scale * 0.75, y: 15 }}
             animate={{ opacity: 1, scale, y: 0 }}
-            transition={{ delay: index * 0.06, duration: 0.5, ease: EASE_OUT }}
+            transition={{ delay: index * 0.04, duration: 0.6, ease: EASE_OUT }}
           />
         );
       })}
