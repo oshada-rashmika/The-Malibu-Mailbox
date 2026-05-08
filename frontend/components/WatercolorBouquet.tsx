@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { motion, type Variants } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 export interface WatercolorFlower {
   id?: string;
@@ -24,73 +24,79 @@ const clamp = (value: number, min: number, max: number) => Math.max(min, Math.mi
 
 const EASE_OUT = [0.18, 1, 0.22, 1] as const;
 
-const bouquetVariants: Variants = {
-  initial: { opacity: 0, scale: 0.92 },
-  animate: {
-    opacity: 1,
-    scale: 1,
-    transition: {
-      duration: 0.6,
-      ease: EASE_OUT,
-      staggerChildren: 0.06
-    }
-  }
+const pseudoRandom = (seed: number) => {
+  const x = Math.sin(seed * 999) * 10000;
+  return x - Math.floor(x);
 };
 
-const flowerVariants: Variants = {
-  initial: { opacity: 0, scale: 0.75 },
-  animate: {
-    opacity: 1,
-    scale: 1,
-    transition: { duration: 0.5, ease: EASE_OUT }
-  }
+const lerp = (min: number, max: number, t: number) => min + (max - min) * t;
+
+const buildClusterLayout = (count: number) => {
+  const centerX = 50;
+  const centerY = 48;
+  const maxRadius = 18;
+  const goldenAngle = 137.5 * (Math.PI / 180);
+
+  return Array.from({ length: count }, (_, index) => {
+    const t = count > 1 ? index / (count - 1) : 0;
+    const radius = Math.sqrt(t) * maxRadius;
+    const angle = index * goldenAngle;
+    const jitter = (pseudoRandom(index + 1) - 0.5) * 6;
+    const xPos = clamp(centerX + Math.cos(angle) * (radius + jitter), 30, 70);
+    const yPos = clamp(centerY + Math.sin(angle) * (radius + jitter) * 0.85, 30, 70);
+    const rotation = lerp(-15, 15, pseudoRandom(index + 10));
+    const scale = lerp(0.9, 1.1, pseudoRandom(index + 20));
+
+    return {
+      left: xPos,
+      top: yPos,
+      rotation,
+      scale,
+      zIndex: index + 1
+    };
+  });
 };
 
 export default function WatercolorBouquet({ flowers, className = '' }: WatercolorBouquetProps) {
-  const orderedFlowers = [...flowers].sort((a, b) => {
-    const aIndex = Number.isFinite(a.z_index) ? (a.z_index as number) : 2;
-    const bIndex = Number.isFinite(b.z_index) ? (b.z_index as number) : 2;
-    return aIndex - bIndex;
-  });
+  const orderedFlowers = [...flowers];
+  const clusterLayout = buildClusterLayout(orderedFlowers.length);
 
   return (
-    <motion.div
-      className={`relative w-full aspect-square ${className}`}
-      variants={bouquetVariants}
-      initial="initial"
-      animate="animate"
-    >
-      <motion.img
+    <div className={`relative w-full aspect-square ${className}`}>
+      <img
         src="/flowers/leaf.webp"
         alt="Bouquet leaf base"
-        className="absolute inset-0 w-full h-full object-contain z-[1]"
-        variants={flowerVariants}
+        className="absolute inset-0 w-full h-full object-contain scale-[1.12] origin-center z-0"
       />
 
       {orderedFlowers.map((flower, index) => {
         const key = flower.id ?? `${flower.flower_type}-${index}`;
-        const rotation = Number.isFinite(flower.rotation) ? flower.rotation : 0;
-        const scale = Number.isFinite(flower.scale) ? flower.scale : 1;
-        const zIndex = Number.isFinite(flower.z_index) ? Math.max(2, flower.z_index as number) : 2;
-        const xPos = clamp(flower.x_pos, 0, 100);
-        const yPos = clamp(flower.y_pos, 0, 100);
+        const placement = clusterLayout[index];
+        const rotation = placement?.rotation ?? 0;
+        const scale = placement?.scale ?? 1;
+        const zIndex = placement?.zIndex ?? index + 1;
+        const left = placement?.left ?? 50;
+        const top = placement?.top ?? 50;
 
         return (
           <motion.img
             key={key}
             src={`/flowers/${normalizeFlowerType(flower.flower_type)}.webp`}
             alt={flower.flower_type}
-            className="absolute w-[38%] sm:w-[34%] md:w-[32%] lg:w-[30%] object-contain"
+            className="absolute w-[42%] sm:w-[40%] md:w-[38%] lg:w-[36%] object-contain -translate-x-1/2 -translate-y-1/2"
             style={{
-              left: `${xPos}%`,
-              top: `${yPos}%`,
-              transform: `translate(-50%, -50%) rotate(${rotation}deg) scale(${scale})`,
+              left: `${left}%`,
+              top: `${top}%`,
+              rotate: `${rotation}deg`,
+              scale,
               zIndex
             }}
-            variants={flowerVariants}
+            initial={{ opacity: 0, scale: scale * 0.75, y: 8 }}
+            animate={{ opacity: 1, scale, y: 0 }}
+            transition={{ delay: index * 0.06, duration: 0.5, ease: EASE_OUT }}
           />
         );
       })}
-    </motion.div>
+    </div>
   );
 }
