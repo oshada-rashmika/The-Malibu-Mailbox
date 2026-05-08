@@ -3,6 +3,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
+// ─── Types ───────────────────────────────────────────────────────────────────
+
 export interface WatercolorFlower {
   id?: string;
   flower_type: string;
@@ -18,12 +20,11 @@ export interface WatercolorBouquetProps {
   className?: string;
 }
 
-// ─── Pure helpers ────────────────────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const normalizeFlowerType = (t: string) => t.trim();
-
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
-
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 const EASE_OUT = [0.18, 1, 0.22, 1] as const;
 
 /** Deterministic pseudo-random [0, 1) from a numeric seed */
@@ -39,118 +40,155 @@ const hashSeed = (s: string) => {
   return Math.abs(h);
 };
 
-const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+// ─── Flower Tier Classification ───────────────────────────────────────────────
+//
+// Tier 1 – FACE flowers: full, wide blooms that sit on top (z 20–30)
+// Tier 2 – MID flowers: medium blooms, behind the face layer (z 14–19)
+// Tier 3 – BACK flowers: tall/slim stems, tucked deepest (z 10–13)
+// Tier 4 – FOLIAGE: leaves, always behind all flowers (z 5–9)
 
-// ─── Layout engine ───────────────────────────────────────────────────────────
+type Tier = 1 | 2 | 3 | 4;
+
+const FLOWER_TIERS: Record<string, Tier> = {
+  rose:      1,
+  sunflower: 1,
+  hibiscus:  1,
+  peony:     1,
+  dahlia:    1,
+  orchid:    2,
+  lily:      2,
+  carnation: 2,
+  tulip:     3,   // ← slim stem, must be tucked behind face flowers
+  iris:      3,
+  leaf:      4,
+};
+
+const getTier = (flowerType: string): Tier => FLOWER_TIERS[flowerType.toLowerCase()] ?? 2;
+
+// ─── Radius Bands per Tier ────────────────────────────────────────────────────
+//
+// Tier 1 face flowers cluster dead-centre so they dominate the composition.
+// Tier 3 (tulips) are pushed slightly outward/inward so wide blooms cover stems.
+// Tier 4 foliage stays on the perimeter, visible as a fringe around the mound.
+
+const TIER_RADIUS: Record<Tier, { min: number; max: number }> = {
+  1: { min: 0,  max: 12 }, // face — heart of the bouquet
+  2: { min: 5,  max: 16 }, // mid  — rings the face layer
+  3: { min: 3,  max: 14 }, // back — slightly inward so stems hide under face blooms
+  4: { min: 12, max: 22 }, // leaf — outer fringe
+};
+
+// Size in % of container width
+const TIER_WIDTH: Record<Tier, string> = {
+  1: '26%',
+  2: '22%',
+  3: '20%',
+  4: '20%',
+};
+
+// Scale multiplier range
+const TIER_SCALE: Record<Tier, [number, number]> = {
+  1: [0.92, 1.10],
+  2: [0.82, 1.00],
+  3: [0.78, 0.96],
+  4: [0.80, 1.00],
+};
+
+// ─── Layout engine ────────────────────────────────────────────────────────────
 
 interface PlacedItem {
   item: WatercolorFlower;
-  /** percentage of container width/height */
-  left: number;
-  top: number;
-  rotation: number;
+  left: number;    // % of container
+  top: number;     // % of container
+  rotation: number; // degrees
   scale: number;
   zIndex: number;
   seed: number;
+  tier: Tier;
 }
 
 /**
- * Jittered-sunflower spiral.
+ * Builds a hand-tied bouquet layout.
  *
- * Flowers are placed on a Fermat spiral (golden-angle phyllotaxis) so they
- * fill the bouquet area organically. Each position is then jittered and
- * clamped so nothing escapes the leafy disc.
- *
- * Minimum-distance enforcement: after placing each flower we check every
- * already-placed flower; if the candidate is too close we nudge it outward
- * along the line connecting the two centres until it clears the threshold.
+ * Approach:
+ *  1. Classify every flower into a semantic tier.
+ *  2. Assign a radius band based on tier (face = centre, foliage = edge).
+ *  3. Place items using a golden-angle spiral within their band.
+ *  4. Apply a "gathered" rotation: each flower rotates ± up to 28° toward the
+ *     vertical centre axis so they feel hand-tied, not fanned out.
+ *  5. Sort and assign z-indices by tier (Tier 1 on top).
  */
-const buildLayout = (items: WatercolorFlower[], containerPx = 400): PlacedItem[] => {
+const buildLayout = (items: WatercolorFlower[]): PlacedItem[] => {
   const goldenAngle = 137.507764 * (Math.PI / 180);
+  const CX = 50; // centre x %
+  const CY = 50; // centre y %
 
-  /**
-   * Usable radius as a % of the container.
-   * The leaf.webp lush area occupies roughly the inner 70 % of the square;
-   * we spread flowers from 8 % to 38 % from center (i.e. ≤ 38 % radius)
-   * so they sit within the green zone.
-   */
-  const MIN_R = 2;   // % — allows flowers to sit near the true centre
-  const MAX_R = 22;  // % — tight mound well inside the leaf silhouette
+  // Counters per tier to generate distinct angles within the band
+  const tierCounts: Record<Tier, number> = { 1: 0, 2: 0, 3: 0, 4: 0 };
 
-  /** Minimum separation between flower anchor-points in % units */
-  const MIN_SEP_PCT = (30 / containerPx) * 100; // ~7.5 % — allows genuine overlap
+  const placed: PlacedItem[] = items.map((item) => {
+    const tier = getTier(normalizeFlowerType(item.flower_type));
+    const idx  = tierCounts[tier]++;
+    const seed = hashSeed(item.id ?? `${item.flower_type}-${tier}-${idx}`);
 
-  const placed: PlacedItem[] = [];
+    // Position within the tier's radius band
+    const band   = TIER_RADIUS[tier];
+    const t      = rng(seed + 1); // 0–1, unique per flower
+    const radius = lerp(band.min, band.max, t);
+    const angle  = idx * goldenAngle + rng(seed + 41) * 0.5; // slight angle jitter
 
-  items.forEach((item, index) => {
-    const seed = hashSeed(item.id ?? `${item.flower_type}-${index}`);
+    // Organic positional jitter (keeps things from looking mechanical)
+    const jx = (rng(seed + 13) - 0.5) * 3.5;
+    const jy = (rng(seed + 17) - 0.5) * 3.5;
 
-    // Spiral radius grows with sqrt(index) so density is uniform
-    const t = items.length > 1 ? index / (items.length - 1) : 0;
-    const r = lerp(MIN_R, MAX_R, Math.sqrt(t));
-    const angle = index * goldenAngle;
+    let left = clamp(CX + Math.cos(angle) * radius + jx, 16, 84);
+    let top  = clamp(CY + Math.sin(angle) * radius + jy, 16, 84);
 
-    // Organic jitter ± 4 %
-    const jitterMag = lerp(1, 4, rng(seed + 3));
-    const jitterAngle = rng(seed + 7) * Math.PI * 2;
-    const jx = Math.cos(jitterAngle) * jitterMag;
-    const jy = Math.sin(jitterAngle) * jitterMag;
+    // "Gathered" rotation: tilt each flower toward the vertical centre axis.
+    // A flower to the right leans left (negative), left leans right (positive).
+    // Extra jitter (±12°) gives hand-arranged variety.
+    const tiltToCenter = -(left - CX) * 0.55;
+    const jitterRot    = lerp(-12, 12, rng(seed + 23));
+    const rotation     = clamp(tiltToCenter + jitterRot, -35, 35);
 
-    let left = 50 + Math.cos(angle) * r + jx;
-    let top = 50 + Math.sin(angle) * r + jy;
+    const scaleBand = TIER_SCALE[tier];
+    const scale     = lerp(scaleBand[0], scaleBand[1], rng(seed + 29));
 
-    // ── Anti-clump: nudge away from every already-placed flower ──────────
-    let attempts = 0;
-    while (attempts < 32) {
-      let tooClose = false;
-      for (const p of placed) {
-        const dx = left - p.left;
-        const dy = top - p.top;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < MIN_SEP_PCT && dist > 0.001) {
-          // Push outward by the deficit
-          const deficit = MIN_SEP_PCT - dist;
-          left += (dx / dist) * deficit * 0.6;
-          top += (dy / dist) * deficit * 0.6;
-          tooClose = true;
-        }
-      }
-      if (!tooClose) break;
-      attempts++;
-    }
-
-    // Keep within the visible leafy disc
-    left = clamp(left, 14, 86);
-    top = clamp(top, 14, 86);
-
-    // Rotation: −45 … +45°
-    const rotation = lerp(-45, 45, rng(seed + 19));
-
-    // Scale: subtle variation — flowers are subordinate to the overall mound
-    // Non-foliage flowers: 0.78 – 1.05; foliage: 0.72 – 0.95
-    const isLeaf = item.flower_type === 'leaf';
-    const scale = isLeaf
-      ? lerp(0.72, 0.95, rng(seed + 29))
-      : lerp(0.78, 1.05, rng(seed + 29));
-
-    placed.push({ item, left, top, rotation, scale, zIndex: 0, seed });
+    return { item, left, top, rotation, scale, zIndex: 0, seed, tier };
   });
 
-  // ── Depth layering: items farther from centre render behind closer ones ──
+  // ── Assign z-indices by tier (Tier 1 = highest, Tier 4 = lowest) ──────────
+  // Within each tier, items placed more centrally render above peripheral ones.
   placed.sort((a, b) => {
-    const dA = (a.left - 50) ** 2 + (a.top - 50) ** 2;
-    const dB = (b.left - 50) ** 2 + (b.top - 50) ** 2;
-    return dB - dA; // descending distance → lower zIndex
+    // Primary: tier (lower tier number = in front)
+    if (a.tier !== b.tier) return b.tier - a.tier; // Tier 4 first (pushed back)
+    // Secondary: distance from centre (closer = in front within same tier)
+    const dA = (a.left - CX) ** 2 + (a.top - CY) ** 2;
+    const dB = (b.left - CX) ** 2 + (b.top - CY) ** 2;
+    return dB - dA; // farther → lower z-index
   });
 
-  return placed.map((p, i) => ({ ...p, zIndex: 10 + i }));
+  // Z-index assignment:
+  //  Tier 4 (foliage) →  z 5–9
+  //  Tier 3 (tulips)  → z 10–14
+  //  Tier 2 (mid)     → z 15–19
+  //  Tier 1 (face)    → z 20+
+  const tierBaseZ: Record<Tier, number> = { 4: 5, 3: 10, 2: 15, 1: 20 };
+  const tierItemIdx: Record<Tier, number> = { 1: 0, 2: 0, 3: 0, 4: 0 };
+
+  return placed.map((p) => {
+    const base = tierBaseZ[p.tier];
+    const z    = base + tierItemIdx[p.tier];
+    tierItemIdx[p.tier]++;
+    return { ...p, zIndex: z };
+  });
 };
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function WatercolorBouquet({ flowers, className = '' }: WatercolorBouquetProps) {
-  // Generate deterministic filler leaves proportional to flower count
-  const leavesCount = Math.max(2, Math.floor(flowers.length / 2));
+  // Filler leaves: 2–5 extra leaf elements to fill gaps and mask stem bases
+  const leavesCount = clamp(Math.floor(flowers.length / 2), 2, 5);
   const fillerLeaves: WatercolorFlower[] = Array.from({ length: leavesCount }).map((_, i) => ({
     id: `filler-leaf-${i}`,
     flower_type: 'leaf',
@@ -159,11 +197,11 @@ export default function WatercolorBouquet({ flowers, className = '' }: Watercolo
     rotation: 0,
   }));
 
-  // Interleave leaves and flowers so the layout spreads both evenly
+  // Interleave: flower, leaf, flower, leaf … for even distribution
   const allItems: WatercolorFlower[] = [];
   const maxLen = Math.max(flowers.length, fillerLeaves.length);
   for (let i = 0; i < maxLen; i++) {
-    if (i < flowers.length) allItems.push(flowers[i]);
+    if (i < flowers.length)   allItems.push(flowers[i]);
     if (i < fillerLeaves.length) allItems.push(fillerLeaves[i]);
   }
 
@@ -173,29 +211,20 @@ export default function WatercolorBouquet({ flowers, className = '' }: Watercolo
     <div
       className={`relative w-full aspect-square flex items-center justify-center ${className}`}
     >
-      {/* ── Base leaf backdrop ──────────────────────────────────────────── */}
+      {/* ── Base leaf backdrop (z-0) — the "nest" ─────────────────────────── */}
+      {/* Scaled up so leaves extend beyond the tight flower mound and mask     */}
+      {/* where stems converge at the base of the arrangement.                  */}
       <img
         src="/flowers/leaf.webp"
         alt="Bouquet leaf base"
-        className="absolute inset-0 w-full h-full object-contain z-0 opacity-95"
-        style={{ transform: 'scale(1.45)', transformOrigin: 'center' }}
+        className="absolute inset-0 w-full h-full object-contain z-0 opacity-97"
+        style={{ transform: 'scale(1.42)', transformOrigin: 'center 55%' }}
       />
 
-      {/* ── Flowers & foliage ───────────────────────────────────────────── */}
+      {/* ── Flowers & foliage (z 5–30+) ───────────────────────────────────── */}
       {layout.map((placement, index) => {
-        const { item, left, top, rotation, scale, zIndex, seed } = placement;
-        const key = item.id ?? `${item.flower_type}-${index}-${seed}`;
-        const isLeaf = item.flower_type === 'leaf';
-
-        /**
-         * Width sizing (dense-cluster mode):
-         *  • Flowers: 22 % of container — large enough to read clearly but
-         *    small enough for 10 blooms to overlap into a mound.
-         *  • Leaves: 20 % — fill gaps without overwhelming the flowers.
-         *
-         * Percentage widths keep the cluster proportional on all screen sizes.
-         */
-        const widthPct = isLeaf ? '20%' : '22%';
+        const { item, left, top, rotation, scale, zIndex, seed, tier } = placement;
+        const key = item.id ?? `${item.flower_type}-${tier}-${index}-${seed}`;
 
         return (
           <motion.img
@@ -204,22 +233,41 @@ export default function WatercolorBouquet({ flowers, className = '' }: Watercolo
             alt={item.flower_type}
             className="absolute object-contain"
             style={{
-              width: widthPct,
+              width: TIER_WIDTH[tier],
               left: `${left}%`,
               top: `${top}%`,
               transform: `translate(-50%, -50%) rotate(${rotation}deg) scale(${scale})`,
               zIndex,
             }}
-            initial={{ opacity: 0, scale: scale * 0.6, y: 20 }}
-            animate={{ opacity: 1, scale, y: 0 }}
+            initial={{ opacity: 0, y: 18, scale: scale * 0.65 }}
+            animate={{ opacity: 1, y: 0, scale }}
             transition={{
-              delay: index * 0.05,
-              duration: 0.65,
+              delay: index * 0.045,
+              duration: 0.7,
               ease: EASE_OUT,
             }}
           />
         );
       })}
+
+      {/* ── Stem-masking foliage overlay (z-4) ────────────────────────────── */}
+      {/* A second, slightly smaller leaf image anchored to the lower-centre   */}
+      {/* covers the base of all stems before they exit the bouquet.            */}
+      <img
+        src="/flowers/leaf.webp"
+        alt=""
+        aria-hidden="true"
+        className="absolute object-contain pointer-events-none"
+        style={{
+          width: '55%',
+          left: '50%',
+          top: '62%',
+          transform: 'translate(-50%, -50%) scale(0.72)',
+          transformOrigin: 'center bottom',
+          zIndex: 4,
+          opacity: 0.88,
+        }}
+      />
     </div>
   );
 }
