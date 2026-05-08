@@ -137,7 +137,7 @@ const buildLayout = (
     const seed = hashSeed(item.id ?? `${item.flower_type}-${i}`);
 
     const t      = flowerItems.length > 1 ? i / (flowerItems.length - 1) : 0;
-    const radius = Math.sqrt(t) * 26; // 0–26 %
+    const radius = Math.sqrt(t) * 18; // 0–18% — keeps all flowers deep within the leaf silhouette
     const angle  = i * goldenAngle + rng(seed + 41) * 0.3;
 
     // Small organic jitter so the grid doesn't look mechanical
@@ -167,8 +167,11 @@ const buildLayout = (
       if (!tooClose) break;
     }
 
-    left = clamp(left, 14, 86);
-    top  = clamp(top,  14, 86);
+    // Strict boundary: clamp to the leaf silhouette's content area.
+    // The leaf.webp has its painted mass between roughly 26–74% horizontally
+    // and 26–70% vertically — nothing should escape these bounds.
+    left = clamp(left, 26, 74);
+    top  = clamp(top,  26, 70);
 
     // Tilt each flower toward the centre axis — creates the "gathered" look
     const tiltToCenter = -(left - CX) * 0.55;
