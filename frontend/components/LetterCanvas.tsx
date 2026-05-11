@@ -75,6 +75,7 @@ function ElementContent({ el, scale }: { el: CanvasElement; scale: number }) {
     color: el.style.color ?? '#1a1a1a',
     fontFamily: el.style.fontFamily ?? 'Georgia, serif',
     fontWeight: el.style.fontWeight ?? '400',
+    fontStyle: el.style.fontStyle ?? 'normal',
     textAlign: (el.style.textAlign as React.CSSProperties['textAlign']) ?? 'left',
     opacity: el.style.opacity ?? 1,
     userSelect: 'none',
@@ -236,6 +237,40 @@ function FloatingElementToolbar({ el, renderedSize, scale, onUpdate }: FloatingT
                 {a === 'left' ? '⫷' : a === 'center' ? '☰' : '⫸'}
               </button>
             ))}
+          </div>
+
+          {/* Formatting */}
+          <div className="flex gap-0.5 bg-white/5 border border-white/10 rounded-lg p-0.5">
+            <button
+              type="button"
+              onClick={() =>
+                onUpdate(el.id, {
+                  style: { ...el.style, fontWeight: el.style.fontWeight === 'bold' ? '400' : 'bold' },
+                })
+              }
+              className={`px-2 py-1 rounded-md text-[11px] font-bold transition-all ${
+                el.style.fontWeight === 'bold'
+                  ? 'bg-rose-gold/25 text-rose-gold'
+                  : 'text-silk-white/40 hover:text-silk-white/70'
+              }`}
+            >
+              B
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                onUpdate(el.id, {
+                  style: { ...el.style, fontStyle: el.style.fontStyle === 'italic' ? 'normal' : 'italic' },
+                })
+              }
+              className={`px-2 py-1 rounded-md text-[11px] italic transition-all ${
+                el.style.fontStyle === 'italic'
+                  ? 'bg-rose-gold/25 text-rose-gold'
+                  : 'text-silk-white/40 hover:text-silk-white/70'
+              }`}
+            >
+              I
+            </button>
           </div>
           )}
 
