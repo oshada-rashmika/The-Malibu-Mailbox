@@ -60,7 +60,9 @@ export default async function DashboardPage() {
             </h1>
             <div className="h-px w-24 bg-gradient-to-r from-transparent via-rose-gold to-transparent mx-auto md:mx-0" />
           </div>
-          <MobileSignOut />
+          <div className="md:hidden">
+            <MobileSignOut />
+          </div>
         </header>
 
         <section className="w-full max-w-2xl flex flex-col items-center space-y-16">
