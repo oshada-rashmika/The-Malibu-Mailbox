@@ -272,6 +272,7 @@ function FloatingElementToolbar({ el, renderedSize, scale, onUpdate }: FloatingT
               I
             </button>
           </div>
+            </>
           )}
 
           {/* Rotation */}
