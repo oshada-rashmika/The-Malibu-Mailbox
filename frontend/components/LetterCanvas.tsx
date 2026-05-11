@@ -132,12 +132,12 @@ function FloatingTextToolbar({ el, renderedSize, scale, onUpdate }: FloatingTool
       <div className="bg-[#1a1a1a]/95 backdrop-blur-xl border border-white/15 rounded-2xl p-3 shadow-2xl shadow-black/40">
         {/* Row 1: Content input */}
         <div className="mb-2.5">
-          <input
-            type="text"
+          <textarea
             value={el.content}
             onChange={(e) => onUpdate(el.id, { content: e.target.value })}
-            className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-silk-white text-sm focus:outline-none focus:ring-1 focus:ring-rose-gold/50 placeholder:text-silk-white/20"
+            className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-silk-white text-sm focus:outline-none focus:ring-1 focus:ring-rose-gold/50 placeholder:text-silk-white/20 resize-none"
             placeholder="Your text…"
+            rows={3}
           />
         </div>
 
