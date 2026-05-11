@@ -10,6 +10,8 @@ export interface CanvasElementStyle {
   fontFamily?: string;
   /** Font weight, e.g. "400", "700", "bold". */
   fontWeight?: string;
+  /** Font style, e.g. "normal", "italic". */
+  fontStyle?: string;
   /** Text alignment — only meaningful for type "text". */
   textAlign?: 'left' | 'center' | 'right';
   /** CSS opacity 0–1. */

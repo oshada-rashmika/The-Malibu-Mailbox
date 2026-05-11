@@ -75,6 +75,7 @@ function ElementContent({ el, scale }: { el: CanvasElement; scale: number }) {
     color: el.style.color ?? '#1a1a1a',
     fontFamily: el.style.fontFamily ?? 'Georgia, serif',
     fontWeight: el.style.fontWeight ?? '400',
+    fontStyle: el.style.fontStyle ?? 'normal',
     textAlign: (el.style.textAlign as React.CSSProperties['textAlign']) ?? 'left',
     opacity: el.style.opacity ?? 1,
     userSelect: 'none',
@@ -108,7 +109,7 @@ interface FloatingToolbarProps {
   onUpdate: (id: string, patch: Partial<CanvasElement>) => void;
 }
 
-function FloatingTextToolbar({ el, renderedSize, scale, onUpdate }: FloatingToolbarProps) {
+function FloatingElementToolbar({ el, renderedSize, scale, onUpdate }: FloatingToolbarProps) {
   const elTop = fromPercent(el.y, 'y', renderedSize);
   const elLeft = fromPercent(el.x, 'x', renderedSize);
   const elWidth = fromPercent(el.width, 'x', renderedSize);
@@ -131,18 +132,22 @@ function FloatingTextToolbar({ el, renderedSize, scale, onUpdate }: FloatingTool
     >
       <div className="bg-[#1a1a1a]/95 backdrop-blur-xl border border-white/15 rounded-2xl p-3 shadow-2xl shadow-black/40">
         {/* Row 1: Content input */}
-        <div className="mb-2.5">
-          <textarea
-            value={el.content}
-            onChange={(e) => onUpdate(el.id, { content: e.target.value })}
-            className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-silk-white text-sm focus:outline-none focus:ring-1 focus:ring-rose-gold/50 placeholder:text-silk-white/20 resize-none"
-            placeholder="Your text…"
-            rows={3}
-          />
-        </div>
+        {el.type === 'text' && (
+          <div className="mb-2.5">
+            <textarea
+              value={el.content}
+              onChange={(e) => onUpdate(el.id, { content: e.target.value })}
+              className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-silk-white text-sm focus:outline-none focus:ring-1 focus:ring-rose-gold/50 placeholder:text-silk-white/20 resize-none"
+              placeholder="Your text…"
+              rows={3}
+            />
+          </div>
+        )}
 
-        {/* Row 2: Font, Size, Color, Align */}
+        {/* Row 2: Controls */}
         <div className="flex flex-wrap items-center gap-2">
+          {el.type === 'text' && (
+            <>
           {/* Font Family */}
           <select
             value={el.style.fontFamily ?? 'Georgia, serif'}
@@ -233,6 +238,41 @@ function FloatingTextToolbar({ el, renderedSize, scale, onUpdate }: FloatingTool
               </button>
             ))}
           </div>
+
+          {/* Formatting */}
+          <div className="flex gap-0.5 bg-white/5 border border-white/10 rounded-lg p-0.5">
+            <button
+              type="button"
+              onClick={() =>
+                onUpdate(el.id, {
+                  style: { ...el.style, fontWeight: el.style.fontWeight === 'bold' ? '400' : 'bold' },
+                })
+              }
+              className={`px-2 py-1 rounded-md text-[11px] font-bold transition-all ${
+                el.style.fontWeight === 'bold'
+                  ? 'bg-rose-gold/25 text-rose-gold'
+                  : 'text-silk-white/40 hover:text-silk-white/70'
+              }`}
+            >
+              B
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                onUpdate(el.id, {
+                  style: { ...el.style, fontStyle: el.style.fontStyle === 'italic' ? 'normal' : 'italic' },
+                })
+              }
+              className={`px-2 py-1 rounded-md text-[11px] italic transition-all ${
+                el.style.fontStyle === 'italic'
+                  ? 'bg-rose-gold/25 text-rose-gold'
+                  : 'text-silk-white/40 hover:text-silk-white/70'
+              }`}
+            >
+              I
+            </button>
+          </div>
+          )}
 
           {/* Rotation */}
           <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-lg px-2 py-1">
@@ -570,9 +610,9 @@ export default function LetterCanvas({ elements, onChange }: LetterCanvasProps) 
             );
           })}
 
-          {/* Floating text toolbar — positioned inside the canvas to follow the element */}
-          {selectedEl && selectedEl.type === 'text' && (
-            <FloatingTextToolbar
+          {/* Floating toolbar — positioned inside the canvas to follow the element */}
+          {selectedEl && (
+            <FloatingElementToolbar
               el={selectedEl}
               renderedSize={renderedSize}
               scale={scale}
