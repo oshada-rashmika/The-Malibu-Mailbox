@@ -5,6 +5,9 @@ import { supabase } from '../config/supabase';
 
 const router = Router();
 
+// Default recipient — the only non-admin user (senurirukshani@gmail.com)
+const DEFAULT_USER_ID = '6cbc990d-8540-4df5-b73c-9662e4e341d1';
+
 const FLOWER_CHUNK_SIZE = 10;
 const LEAF_TYPE = 'leaf';
 const ALLOWED_FLOWER_TYPES = new Set([
@@ -143,7 +146,7 @@ router.post('/letters', async (req: Request, res: Response, next: NextFunction) 
       title: title || 'A Secret Letter',
       content,                          // CanvasElement[] → JSONB natively
       scheduled_for: date,              // YYYY-MM-DD
-      user_id: user_id || null,
+      user_id: user_id || DEFAULT_USER_ID,
     };
 
     console.log('[Admin] Inserting letter:', {
