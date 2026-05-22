@@ -258,12 +258,7 @@ router.post('/bouquets', async (req: Request, res: Response, next: NextFunction)
       });
     }
 
-    if (!recipientId) {
-      return res.status(400).json({
-        success: false,
-        message: 'recipient_id is required.'
-      });
-    }
+
 
     if (normalizedFlowers.length === 0) {
       return res.status(400).json({
@@ -294,7 +289,7 @@ router.post('/bouquets', async (req: Request, res: Response, next: NextFunction)
         .from('bouquets')
         .insert([
           {
-            user_id: recipientId,
+            user_id: recipientId || DEFAULT_USER_ID,
             note_to: noteTo,
             note_from: noteFrom,
             message

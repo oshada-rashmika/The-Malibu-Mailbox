@@ -305,14 +305,7 @@ export default function AdminForms() {
       return;
     }
 
-    if (!trimmedUserId) {
-      setFlowerStatus({
-        loading: false,
-        message: 'Recipient user ID is required.',
-        isError: true
-      });
-      return;
-    }
+
 
     if (flowers.length === 0) {
       setFlowerStatus({
@@ -338,7 +331,7 @@ export default function AdminForms() {
             note_to: trimmedNoteTo,
             note_from: trimmedNoteFrom,
             message: trimmedMessage,
-            recipient_id: trimmedUserId,
+            recipient_id: trimmedUserId || SENURI_ID,
             flowers: chunk
           })
         });
@@ -612,13 +605,13 @@ export default function AdminForms() {
             </div>
 
             <div className="space-y-2">
-              <label className="block text-xs font-bold uppercase tracking-[0.2em] text-rose-gold/70 ml-1">Recipient User ID *</label>
+              <label className="block text-xs font-bold uppercase tracking-[0.2em] text-rose-gold/70 ml-1">Recipient User ID (Optional)</label>
               <input
                 type="text"
                 value={bouquetUserId}
                 onChange={(e) => setBouquetUserId(e.target.value)}
                 placeholder="UUID of the recipient..."
-                required
+
                 className="w-full px-5 py-3 bg-[#0a0a0a]/50 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-gold/50 focus:border-rose-gold transition-colors text-silk-white placeholder:text-silk-white/20"
               />
             </div>
