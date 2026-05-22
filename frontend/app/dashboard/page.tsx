@@ -31,7 +31,7 @@ export default async function DashboardPage() {
   const { data: letter } = await supabase
     .from('letters')
     .select('*')
-    .eq('user_id', user.id)
+    .or(`user_id.eq.${user.id},user_id.is.null`)
     .lte('scheduled_for', today)
     .order('scheduled_for', { ascending: false })
     .limit(1)
