@@ -17,30 +17,31 @@ export default function GlobalHeader() {
         {/* Magical Toggle (Top-Left) */}
         <button
           onClick={toggleTheme}
-          className="pointer-events-auto relative group transition-transform hover:scale-105 active:scale-95 outline-none"
+          className="pointer-events-auto relative flex items-center bg-white/40 backdrop-blur-md rounded-full p-1 shadow-[0_4px_16px_rgba(31,38,135,0.2)] border border-white/50 w-[84px] h-[44px] outline-none"
         >
-          {theme === 'barbie' ? (
-            <div className="w-16 h-16 rounded-full border-4 border-blush-pink shadow-[0_0_15px_var(--theme-rose-gold)] overflow-hidden bg-white/50 backdrop-blur flex items-center justify-center p-1">
-              <img src="/barbie-logo.png" alt="Barbie Mode" className="w-full h-full object-contain" />
-            </div>
-          ) : (
-            <div className="w-16 h-16 border-4 border-silk-white shadow-[0_0_15px_var(--theme-silk-white)] overflow-hidden bg-white/50 backdrop-blur flex items-center justify-center p-1" style={{ borderRadius: '50% 20% 50% 20%' }}>
-              <img src="/stitch-logo.png" alt="Stitch Mode" className="w-full h-full object-contain" />
-            </div>
-          )}
+          {/* Active indicator sliding background */}
+          <motion.div
+            className="absolute top-1 bottom-1 w-[36px] bg-white rounded-full shadow-sm z-0"
+            animate={{ left: theme === 'barbie' ? '4px' : '42px' }}
+            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+          />
+          <div className="relative z-10 w-[38px] h-full flex items-center justify-center pointer-events-none">
+            <img src="/bb.png" alt="Barbie" className={`w-7 h-7 object-contain transition-opacity ${theme === 'barbie' ? 'opacity-100' : 'opacity-40'}`} />
+          </div>
+          <div className="relative z-10 w-[38px] h-full flex items-center justify-center pointer-events-none">
+            <img src="/stitch.png" alt="Stitch" className={`w-7 h-7 object-contain transition-opacity ${theme === 'stitch' ? 'opacity-100' : 'opacity-40'}`} />
+          </div>
         </button>
 
         {/* Hamburger Menu (Top-Right) */}
         <button
           onClick={() => setMenuOpen(true)}
-          className="pointer-events-auto w-12 h-12 flex items-center justify-center rounded-full bg-white/30 backdrop-blur border border-white/40 text-deep-velvet shadow-[0_4px_16px_rgba(31,38,135,0.2)] hover:bg-white/50 transition-colors"
+          className="pointer-events-auto w-[44px] h-[44px] flex items-center justify-center rounded-full bg-white/40 backdrop-blur-md border border-white/50 shadow-[0_4px_16px_rgba(31,38,135,0.2)] hover:bg-white/60 transition-colors"
         >
           {theme === 'barbie' ? (
-            <Heart size={24} className="text-[#ff69b4] fill-[#ff69b4]" />
+            <img src="/heart.png" alt="Menu" className="w-6 h-6 object-contain drop-shadow-sm" />
           ) : (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#ff6b6b" stroke="#ff6b6b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2a4 4 0 0 1 4 4c0 1.5-.9 2.8-2.2 3.5C15.5 10 17 11.5 17 13.5c0 2-1.5 3.5-3.2 4-1.3.7-2.2 2-2.2 3.5a4 4 0 0 1-8 0c0-1.5.9-2.8 2.2-3.5-1.7-.5-3.2-2-3.2-4 0-2 1.5-3.5 3.2-4C4.5 8.8 3.6 7.5 3.6 6a4 4 0 0 1 8-4Z"/>
-            </svg> // Flower for Stitch
+            <img src="/stitch-menu.png" alt="Menu" className="w-6 h-6 object-contain drop-shadow-sm" />
           )}
         </button>
       </header>
