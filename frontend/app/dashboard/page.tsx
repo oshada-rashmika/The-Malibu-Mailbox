@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import CountdownTimer from '../../components/CountdownTimer';
 import LetterClient from '../../components/LetterClient';
 import VirtualPet from '../../components/VirtualPet';
+import BackgroundLogo from '../../components/BackgroundLogo';
 import SanctuaryDock from '../../components/SanctuaryDock';
 
 
@@ -38,10 +39,7 @@ export default async function DashboardPage() {
 
   return (
     <main className="min-h-screen w-full flex flex-col items-center py-20 px-4 bg-background relative overflow-hidden">
-      {/* Branded Background Motif */}
-      <div className="fixed bottom-[-5%] right-[-5%] w-[400px] md:w-[600px] h-auto opacity-[0.05] pointer-events-none select-none z-0">
-        <img src="/logo.png" alt="Malibu Logo" className="w-full h-full grayscale brightness-50" />
-      </div>
+      <BackgroundLogo />
       
       <div className="relative z-10 w-full max-w-5xl mx-auto flex flex-col items-center">
         <SanctuaryDock />

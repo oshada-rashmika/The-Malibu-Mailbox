@@ -3,6 +3,7 @@
 import React, { forwardRef, useRef } from 'react';
 import HTMLFlipBook from 'react-pageflip';
 import { motion } from 'framer-motion';
+import { useTheme } from './ThemeProvider';
 
 interface NotebookEntry {
   id: string;
@@ -21,31 +22,34 @@ interface PageProps {
 }
 
 const Page = forwardRef<HTMLDivElement, PageProps>(({ children, isCover, bgElement }, ref) => {
+  const { theme } = useTheme();
+  
+  const coverColor = theme === 'barbie' ? 'bg-[#ff69b4]' : 'bg-[#1e90ff]';
+  const pageColor = 'bg-white'; // pure 2D white
+
   return (
     <div className="page" ref={ref} data-density={isCover ? 'hard' : 'soft'}>
-      <div className={`w-full h-full relative shadow-inner overflow-hidden ${
+      <div className={`w-full h-full relative overflow-hidden border-r-4 border-b-4 border-deep-velvet ${
         isCover
-          ? 'bg-gradient-to-br from-[#FF69B4] via-[#FF1493] to-[#C71585] border-l-8 border-black/20'
-          : 'bg-[#FFFDD0] notebook-lines'
+          ? `${coverColor} border-l-8 border-deep-velvet`
+          : `${pageColor} border-l-4 border-deep-velvet`
       }`}>
         {isCover ? (
           <>
-            <div className="absolute inset-0 opacity-20 pointer-events-none mix-blend-overlay bg-[url('https://www.transparenttextures.com/patterns/leather.png')]" />
             <img
-              src="/barbie.png"
+              src={theme === 'barbie' ? "/barbie.png" : "/stitch-logo.png"}
               alt=""
-              className="absolute bottom-0 left-0 w-full opacity-30 pointer-events-none object-contain translate-y-2"
+              className="absolute bottom-4 left-1/2 -translate-x-1/2 w-32 opacity-80 pointer-events-none object-contain"
+              style={{ imageRendering: 'pixelated' }}
             />
           </>
         ) : (
           <>
-            <div className="absolute inset-0 opacity-50 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')]" />
-            <div className="absolute left-10 top-0 bottom-0 w-[2px] bg-red-400/30" />
             {bgElement}
           </>
         )}
 
-        <div className="h-full w-full flex flex-col relative z-10">
+        <div className="h-full w-full flex flex-col relative z-10 font-vt323">
           {children}
         </div>
       </div>
@@ -74,11 +78,12 @@ const LipIcon = ({ scatterIndex, total }: { scatterIndex: number; total: number 
     <motion.div
       initial={{ scale: 0, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
-      className="absolute pointer-events-none select-none text-2xl"
+      className="absolute pointer-events-none select-none text-3xl drop-shadow-md"
       style={{
         left: `calc(50% + ${x}px)`,
         top: `calc(50% + ${y}px)`,
         transform: `translate(-50%, -50%) rotate(${rotate}deg)`,
+        imageRendering: 'pixelated'
       }}
       transition={{
         type: 'spring',
@@ -93,13 +98,13 @@ const LipIcon = ({ scatterIndex, total }: { scatterIndex: number; total: number 
 };
 
 const getDynamicTextSize = (length: number): string => {
-  if (length < 30)  return 'text-4xl leading-snug';
-  if (length < 70)  return 'text-3xl leading-snug';
-  if (length < 120) return 'text-2xl leading-snug';
-  if (length < 200) return 'text-xl leading-snug';
-  if (length < 300) return 'text-lg leading-snug';
-  if (length < 400) return 'text-base leading-snug';
-  return 'text-sm leading-snug';
+  if (length < 30)  return 'text-5xl leading-tight';
+  if (length < 70)  return 'text-4xl leading-tight';
+  if (length < 120) return 'text-3xl leading-tight';
+  if (length < 200) return 'text-2xl leading-tight';
+  if (length < 300) return 'text-xl leading-tight';
+  if (length < 400) return 'text-lg leading-tight';
+  return 'text-base leading-tight';
 };
 
 const SENDER_MAP: Record<string, string> = {
@@ -113,7 +118,6 @@ const getKissContainerHeight = (kissCount: number): number => {
   if (kissCount === 0) return 0;
   const cols = Math.ceil(Math.sqrt(kissCount));
   const rows = Math.ceil(kissCount / cols);
-  // 38px per row + 28px padding (14px top + 14px bottom jitter buffer)
   return Math.min(rows * 38 + 28, 120);
 };
 
@@ -153,44 +157,35 @@ export default function HeartbeatNotebook({
         maxWidth={500}
         minHeight={400}
         maxHeight={700}
-        maxShadowOpacity={0.5}
+        maxShadowOpacity={0.1}
         showCover={true}
         mobileScrollSupport={true}
         onFlip={playFlipSound}
-        className="shadow-2xl rounded-lg overflow-hidden"
+        className="shadow-[12px_12px_0px_rgba(0,0,0,0.15)] bg-white border-[6px] border-deep-velvet"
         ref={flipBookRef}
       >
         {/* Front Cover */}
         <Page isCover={true}>
           <div className="flex-1 flex flex-col items-center justify-center text-center px-10">
-            <h1 className="text-4xl font-serif text-white mb-2 drop-shadow-lg tracking-tighter">
+            <h1 className="text-6xl font-black text-white mb-2 uppercase tracking-widest shadow-black drop-shadow-[4px_4px_0px_rgba(0,0,0,0.3)]">
               Heartbeat
             </h1>
-            <p className="text-rose-gold text-4xl drop-shadow-md font-cursive">
+            <p className="text-white text-4xl uppercase tracking-widest font-bold shadow-black drop-shadow-[4px_4px_0px_rgba(0,0,0,0.3)]">
               Notebook
             </p>
-            <div className="mt-8 w-12 h-px bg-white/40 mx-auto" />
+            <div className="mt-8 w-24 h-2 bg-white mx-auto border-2 border-deep-velvet" />
           </div>
         </Page>
 
         {/* Introduction Page */}
-        <Page
-          bgElement={
-            <img
-              src="/us.png"
-              alt=""
-              className="absolute bottom-0 left-0 w-full opacity-25 pointer-events-none object-contain translate-y-1"
-            />
-          }
-        >
+        <Page>
           <div className="flex-1 flex flex-col justify-center px-10 py-10">
             <div className="text-center space-y-6 relative z-10">
-              <h2 className="text-2xl font-serif text-deep-velvet/60 italic">Our Shared Whispers</h2>
-              <p className="text-2xl text-deep-velvet/80 leading-relaxed font-cursive">
-                &ldquo;Every word here is a heartbeat captured in time. A sanctuary for our
-                thoughts, our dreams, and our infinite love.&rdquo;
+              <h2 className="text-4xl font-bold text-deep-velvet uppercase tracking-widest">Our Whispers</h2>
+              <p className="text-3xl text-deep-velvet leading-relaxed">
+                "Every word here is a heartbeat captured in time. A sanctuary for our thoughts, our dreams, and our infinite love."
               </p>
-              <div className="text-pink-400 text-3xl animate-pulse">♥</div>
+              <div className="text-pink-500 text-5xl" style={{ imageRendering: 'pixelated' }}>♥</div>
             </div>
           </div>
         </Page>
@@ -207,7 +202,7 @@ export default function HeartbeatNotebook({
                 {/* Text area — grows to fill space, never overflows */}
                 <div className="flex-1 flex items-center justify-center min-h-0 overflow-hidden">
                   <p
-                    className={`text-deep-velvet/90 text-center font-cursive ${getDynamicTextSize(
+                    className={`text-deep-velvet text-center font-bold ${getDynamicTextSize(
                       entry.content.length
                     )}`}
                   >
@@ -215,7 +210,7 @@ export default function HeartbeatNotebook({
                   </p>
                 </div>
 
-                {/* Kiss scatter — fixed calculated height, fully visible */}
+                {/* Kiss scatter */}
                 {kissCount > 0 && (
                   <div
                     className="relative w-full shrink-0"
@@ -227,13 +222,13 @@ export default function HeartbeatNotebook({
                   </div>
                 )}
 
-                {/* Footer — always last, never overlapped */}
-                <div className="shrink-0 flex items-center justify-between pt-3 border-t border-deep-velvet/10 mt-3">
+                {/* Footer */}
+                <div className="shrink-0 flex items-center justify-between pt-4 border-t-4 border-deep-velvet mt-4">
                   <div className="flex flex-col">
-                    <span className="text-[10px] uppercase tracking-widest text-deep-velvet/50 font-bold mb-0.5">
+                    <span className="text-sm uppercase tracking-widest text-deep-velvet font-bold mb-1">
                       {getSenderName(entry.sender_id)}
                     </span>
-                    <span className="text-[9px] uppercase tracking-widest text-deep-velvet/30 font-bold">
+                    <span className="text-xs uppercase tracking-widest text-deep-velvet font-bold opacity-60">
                       {new Date(entry.created_at).toLocaleDateString()}
                     </span>
                   </div>
@@ -244,9 +239,9 @@ export default function HeartbeatNotebook({
                         e.stopPropagation();
                         onKiss(entry.id);
                       }}
-                      className="text-[10px] uppercase tracking-tighter text-pink-500 hover:text-pink-700 flex items-center gap-1 font-bold bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm shadow-sm active:scale-95 transition-all"
+                      className="text-sm uppercase tracking-widest text-white hover:bg-[#FF1493] flex items-center gap-1 font-bold bg-[#FF69B4] px-4 py-2 border-2 border-deep-velvet shadow-[2px_2px_0px_rgba(0,0,0,0.2)] active:translate-y-1 active:shadow-none transition-all"
                     >
-                      Give a Kiss 💋
+                      KISS 💋
                     </button>
                   )}
                 </div>
@@ -259,7 +254,7 @@ export default function HeartbeatNotebook({
         {/* Final Page */}
         <Page>
           <div className="flex-1 flex items-center justify-center">
-            <p className="text-2xl text-deep-velvet/40 italic font-cursive">
+            <p className="text-4xl text-deep-velvet opacity-60 uppercase font-bold tracking-widest">
               To be continued...
             </p>
           </div>
@@ -268,8 +263,8 @@ export default function HeartbeatNotebook({
         {/* Back Cover */}
         <Page isCover={true}>
           <div className="flex-1 flex items-center justify-center opacity-40">
-            <div className="w-16 h-16 border-2 border-white/20 rounded-full flex items-center justify-center">
-              <span className="text-white font-serif text-xl">M</span>
+            <div className="w-20 h-20 border-8 border-white flex items-center justify-center bg-deep-velvet">
+              <span className="text-white text-5xl font-bold">M</span>
             </div>
           </div>
         </Page>

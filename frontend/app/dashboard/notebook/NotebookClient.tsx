@@ -90,11 +90,11 @@ export default function NotebookClient({ userId }: { userId: string }) {
           >
             ← Sanctuary
           </Link>
-          <h1 className="text-4xl md:text-5xl font-serif text-deep-velvet mb-2">
+          <h1 className="text-4xl md:text-5xl font-bold uppercase tracking-widest text-deep-velvet mb-2">
             Our Shared Whispers
           </h1>
-          <div className="h-px w-24 bg-gradient-to-r from-transparent via-rose-gold to-transparent mx-auto" />
-          <p className="text-deep-velvet/60 italic font-serif text-lg mt-4">
+          <div className="h-2 w-24 bg-deep-velvet mx-auto mt-2" />
+          <p className="text-deep-velvet/80 font-bold text-xl mt-4">
             A digital archive of our heartbeats
           </p>
         </div>
@@ -109,19 +109,19 @@ export default function NotebookClient({ userId }: { userId: string }) {
             animate={{ opacity: 1, y: 0 }}
             className="w-full max-w-md px-6"
           >
-            <form onSubmit={handleShareNote} className="bg-white/40 backdrop-blur-xl border border-white/60 p-6 rounded-[2rem] shadow-sm">
+            <form onSubmit={handleShareNote} className="bg-white border-4 border-deep-velvet p-6 shadow-[8px_8px_0px_rgba(0,0,0,0.1)]">
               <textarea
                 value={newNote}
                 onChange={(e) => setNewNote(e.target.value)}
                 placeholder="Write a whisper..."
                 rows={3}
-                className="w-full bg-transparent border-none focus:ring-0 text-deep-velvet placeholder:text-deep-velvet/30 font-handwriting text-xl resize-none"
+                className="w-full bg-transparent border-none focus:ring-0 text-deep-velvet placeholder:text-deep-velvet/30 font-vt323 text-2xl resize-none outline-none"
               />
-              <div className="flex justify-end mt-2">
+              <div className="flex justify-end mt-4">
                 <button
                   type="submit"
                   disabled={sharing || !newNote.trim()}
-                  className="px-6 py-2 bg-[#FF69B4] text-white rounded-full text-[10px] uppercase tracking-widest font-bold shadow-sm hover:bg-[#FF1493] transition-all disabled:opacity-50"
+                  className="px-6 py-2 bg-deep-velvet text-white border-2 border-deep-velvet text-lg uppercase tracking-widest font-bold shadow-[4px_4px_0px_rgba(0,0,0,0.2)] hover:translate-y-1 hover:shadow-none transition-all disabled:opacity-50"
                 >
                   {sharing ? 'Sharing...' : 'Share Note'}
                 </button>
@@ -139,12 +139,12 @@ export default function NotebookClient({ userId }: { userId: string }) {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="text-center p-12 bg-white/40 backdrop-blur-xl rounded-[2.5rem] border border-white/60 shadow-xl max-w-md mx-6"
+            className="text-center p-12 bg-white border-4 border-deep-velvet shadow-[8px_8px_0px_rgba(0,0,0,0.1)] max-w-md mx-6"
           >
-            <p className="text-2xl font-serif text-deep-velvet/80 italic mb-4">
+            <p className="text-3xl font-bold text-deep-velvet mb-4">
               "Every story has a beginning... ours is waiting for its first word."
             </p>
-            <div className="h-px w-12 bg-rose-gold/30 mx-auto" />
+            <div className="h-2 w-12 bg-deep-velvet mx-auto" />
           </motion.div>
         ) : (
           <motion.div
