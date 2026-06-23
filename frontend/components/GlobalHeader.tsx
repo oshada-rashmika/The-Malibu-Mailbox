@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useTheme } from './ThemeProvider';
-import { Menu, X, LogOut } from 'lucide-react';
+import { X, LogOut, Heart } from 'lucide-react';
 import { signOut } from '../app/login/actions';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -35,7 +35,13 @@ export default function GlobalHeader() {
           onClick={() => setMenuOpen(true)}
           className="pointer-events-auto w-12 h-12 flex items-center justify-center rounded-full bg-white/30 backdrop-blur border border-white/40 text-deep-velvet shadow-[0_4px_16px_rgba(31,38,135,0.2)] hover:bg-white/50 transition-colors"
         >
-          <Menu size={24} />
+          {theme === 'barbie' ? (
+            <Heart size={24} className="text-[#ff69b4] fill-[#ff69b4]" />
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#ff6b6b" stroke="#ff6b6b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2a4 4 0 0 1 4 4c0 1.5-.9 2.8-2.2 3.5C15.5 10 17 11.5 17 13.5c0 2-1.5 3.5-3.2 4-1.3.7-2.2 2-2.2 3.5a4 4 0 0 1-8 0c0-1.5.9-2.8 2.2-3.5-1.7-.5-3.2-2-3.2-4 0-2 1.5-3.5 3.2-4C4.5 8.8 3.6 7.5 3.6 6a4 4 0 0 1 8-4Z"/>
+            </svg> // Flower for Stitch
+          )}
         </button>
       </header>
 
@@ -55,32 +61,42 @@ export default function GlobalHeader() {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed inset-y-0 right-0 w-64 bg-silk-white shadow-2xl z-[100] flex flex-col p-6"
+              className="fixed inset-y-0 right-0 w-full sm:w-80 bg-silk-white shadow-2xl z-[100] flex flex-col p-6 items-center justify-center"
             >
-              <div className="flex justify-end mb-8">
+              <div className="absolute top-6 right-6">
                 <button
                   onClick={() => setMenuOpen(false)}
-                  className="w-10 h-10 flex items-center justify-center rounded-full bg-deep-velvet/5 text-deep-velvet hover:bg-deep-velvet/10 transition-colors"
+                  className="w-12 h-12 flex items-center justify-center rounded-full bg-deep-velvet/5 text-deep-velvet hover:bg-deep-velvet/10 transition-colors"
                 >
-                  <X size={20} />
+                  <X size={24} />
                 </button>
               </div>
 
-              <nav className="flex flex-col gap-6 flex-1">
-                <Link href="/dashboard/history" onClick={() => setMenuOpen(false)} className="text-lg font-bold uppercase tracking-wider text-deep-velvet hover:text-rose-gold transition-colors">Memories</Link>
-                <Link href="/dashboard/notebook" onClick={() => setMenuOpen(false)} className="text-lg font-bold uppercase tracking-wider text-deep-velvet hover:text-rose-gold transition-colors">Notebook</Link>
-                <Link href="/dashboard" onClick={() => setMenuOpen(false)} className="text-lg font-bold uppercase tracking-wider text-deep-velvet hover:text-rose-gold transition-colors">Home</Link>
-                <Link href="/dashboard/boutique" onClick={() => setMenuOpen(false)} className="text-lg font-bold uppercase tracking-wider text-deep-velvet hover:text-rose-gold transition-colors">Boutique</Link>
-                <Link href="/dashboard/wallet" onClick={() => setMenuOpen(false)} className="text-lg font-bold uppercase tracking-wider text-deep-velvet hover:text-rose-gold transition-colors">My Wallet</Link>
+              {/* Oversized Emoji Menu */}
+              <nav className="flex flex-col gap-8 flex-1 items-center justify-center w-full">
+                <Link href="/dashboard/history" onClick={() => setMenuOpen(false)} className="group flex flex-col items-center gap-2">
+                  <span className="text-6xl group-hover:scale-125 transition-transform duration-300 drop-shadow-md">📸</span>
+                </Link>
+                <Link href="/dashboard/notebook" onClick={() => setMenuOpen(false)} className="group flex flex-col items-center gap-2">
+                  <span className="text-6xl group-hover:scale-125 transition-transform duration-300 drop-shadow-md">📓</span>
+                </Link>
+                <Link href="/dashboard" onClick={() => setMenuOpen(false)} className="group flex flex-col items-center gap-2">
+                  <span className="text-6xl group-hover:scale-125 transition-transform duration-300 drop-shadow-md">🏠</span>
+                </Link>
+                <Link href="/dashboard/boutique" onClick={() => setMenuOpen(false)} className="group flex flex-col items-center gap-2">
+                  <span className="text-6xl group-hover:scale-125 transition-transform duration-300 drop-shadow-md">🛍️</span>
+                </Link>
+                <Link href="/dashboard/wallet" onClick={() => setMenuOpen(false)} className="group flex flex-col items-center gap-2">
+                  <span className="text-6xl group-hover:scale-125 transition-transform duration-300 drop-shadow-md">👛</span>
+                </Link>
               </nav>
 
-              <form action={signOut} className="mt-auto">
+              <form action={signOut} className="mt-8 w-full max-w-[200px]">
                 <button
                   type="submit"
-                  className="flex items-center gap-2 w-full justify-center px-4 py-3 border border-deep-velvet/30 rounded-full text-xs font-bold uppercase tracking-widest text-deep-velvet hover:bg-deep-velvet hover:text-silk-white transition-all duration-300"
+                  className="flex items-center gap-2 w-full justify-center px-4 py-3 border-2 border-deep-velvet/20 rounded-full text-xs font-bold uppercase tracking-widest text-deep-velvet hover:bg-deep-velvet hover:text-silk-white hover:scale-105 transition-all duration-300"
                 >
                   <LogOut className="w-4 h-4" />
-                  <span>Sign Out</span>
                 </button>
               </form>
             </motion.div>
