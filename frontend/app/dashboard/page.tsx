@@ -4,7 +4,6 @@ import { redirect } from 'next/navigation';
 import CountdownTimer from '../../components/CountdownTimer';
 import LetterClient from '../../components/LetterClient';
 import SanctuaryDock from '../../components/SanctuaryDock';
-import MobileSignOut from '../../components/MobileSignOut';
 
 
 export default async function DashboardPage() {
@@ -37,34 +36,27 @@ export default async function DashboardPage() {
     .single();
 
   return (
-    <main className="min-h-screen w-full flex flex-col items-center py-20 px-4 bg-gradient-to-br from-silk-white to-blush-pink relative overflow-hidden">
+    <main className="min-h-screen w-full flex flex-col items-center py-20 px-4 bg-background relative overflow-hidden">
       {/* Branded Background Motif */}
       <div className="fixed bottom-[-5%] right-[-5%] w-[400px] md:w-[600px] h-auto opacity-[0.05] pointer-events-none select-none z-0">
         <img src="/logo.png" alt="Malibu Logo" className="w-full h-full grayscale brightness-50" />
       </div>
-
-      {/* Ambient glowing embellishments */}
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-rose-gold/20 rounded-full blur-[100px] opacity-50 pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blush-pink/40 rounded-full blur-[100px] opacity-70 pointer-events-none" />
       
       <div className="relative z-10 w-full max-w-5xl mx-auto flex flex-col items-center">
         <SanctuaryDock />
 
-        <header className="w-full flex flex-col-reverse md:flex-row items-center justify-between gap-6 mb-16 pt-8 px-4">
-          <div className="flex flex-col items-center md:items-start text-center md:text-left">
+        <header className="w-full flex flex-col items-center gap-6 mb-16 pt-8 px-4">
+          <div className="flex flex-col items-center text-center">
             <h1 className="text-4xl md:text-5xl font-serif text-deep-velvet mb-4">
               Your Sanctuary
             </h1>
-            <div className="h-px w-24 bg-gradient-to-r from-transparent via-rose-gold to-transparent mx-auto md:mx-0" />
-          </div>
-          <div className="md:hidden">
-            <MobileSignOut />
+            <div className="h-px w-24 bg-deep-velvet mx-auto" />
           </div>
         </header>
 
         <section className="w-full max-w-2xl flex flex-col items-center space-y-16">
           {/* Global Countdown Timer */}
-          <div className="bg-white/40 backdrop-blur-xl border border-white/50 p-8 rounded-[2.5rem] shadow-glass-sm w-full">
+          <div className="bg-white border-4 border-deep-velvet p-8 w-full shadow-[8px_8px_0px_rgba(0,0,0,0.1)]">
             <CountdownTimer />
           </div>
 

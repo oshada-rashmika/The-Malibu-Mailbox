@@ -62,7 +62,7 @@ export default function GlobalHeader() {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed inset-y-0 right-0 w-full sm:w-80 bg-silk-white shadow-2xl z-[100] flex flex-col p-6 items-center justify-center"
+              className="fixed inset-y-0 right-0 w-full sm:w-80 bg-background border-l-4 border-deep-velvet z-[100] flex flex-col p-6 items-center justify-center"
             >
               <div className="absolute top-6 right-6">
                 <button
@@ -76,28 +76,34 @@ export default function GlobalHeader() {
               {/* Oversized Emoji Menu */}
               <nav className="flex flex-col gap-8 flex-1 items-center justify-center w-full">
                 <Link href="/dashboard/history" onClick={() => setMenuOpen(false)} className="group flex flex-col items-center gap-2">
-                  <span className="text-6xl group-hover:scale-125 transition-transform duration-300 drop-shadow-md">📸</span>
+                  <span className="text-6xl group-hover:scale-110 transition-transform duration-300" style={{ imageRendering: 'pixelated' }}>📸</span>
+                  <span className="text-xl tracking-widest uppercase font-bold text-deep-velvet group-hover:text-rose-gold transition-colors">Memories</span>
                 </Link>
                 <Link href="/dashboard/notebook" onClick={() => setMenuOpen(false)} className="group flex flex-col items-center gap-2">
-                  <span className="text-6xl group-hover:scale-125 transition-transform duration-300 drop-shadow-md">📓</span>
+                  <span className="text-6xl group-hover:scale-110 transition-transform duration-300" style={{ imageRendering: 'pixelated' }}>📓</span>
+                  <span className="text-xl tracking-widest uppercase font-bold text-deep-velvet group-hover:text-rose-gold transition-colors">Notebook</span>
                 </Link>
                 <Link href="/dashboard" onClick={() => setMenuOpen(false)} className="group flex flex-col items-center gap-2">
-                  <span className="text-6xl group-hover:scale-125 transition-transform duration-300 drop-shadow-md">🏠</span>
+                  <span className="text-6xl group-hover:scale-110 transition-transform duration-300" style={{ imageRendering: 'pixelated' }}>🏠</span>
+                  <span className="text-xl tracking-widest uppercase font-bold text-deep-velvet group-hover:text-rose-gold transition-colors">Home</span>
                 </Link>
                 <Link href="/dashboard/boutique" onClick={() => setMenuOpen(false)} className="group flex flex-col items-center gap-2">
-                  <span className="text-6xl group-hover:scale-125 transition-transform duration-300 drop-shadow-md">🛍️</span>
+                  <span className="text-6xl group-hover:scale-110 transition-transform duration-300" style={{ imageRendering: 'pixelated' }}>🛍️</span>
+                  <span className="text-xl tracking-widest uppercase font-bold text-deep-velvet group-hover:text-rose-gold transition-colors">Boutique</span>
                 </Link>
                 <Link href="/dashboard/wallet" onClick={() => setMenuOpen(false)} className="group flex flex-col items-center gap-2">
-                  <span className="text-6xl group-hover:scale-125 transition-transform duration-300 drop-shadow-md">👛</span>
+                  <span className="text-6xl group-hover:scale-110 transition-transform duration-300" style={{ imageRendering: 'pixelated' }}>👛</span>
+                  <span className="text-xl tracking-widest uppercase font-bold text-deep-velvet group-hover:text-rose-gold transition-colors">My Wallet</span>
                 </Link>
               </nav>
 
               <form action={signOut} className="mt-8 w-full max-w-[200px]">
                 <button
                   type="submit"
-                  className="flex items-center gap-2 w-full justify-center px-4 py-3 border-2 border-deep-velvet/20 rounded-full text-xs font-bold uppercase tracking-widest text-deep-velvet hover:bg-deep-velvet hover:text-silk-white hover:scale-105 transition-all duration-300"
+                  className="flex items-center gap-2 w-full justify-center px-4 py-3 border-4 border-deep-velvet bg-white shadow-[4px_4px_0px_rgba(0,0,0,0.1)] text-lg font-bold uppercase tracking-widest text-deep-velvet hover:bg-deep-velvet hover:text-white active:translate-x-1 active:translate-y-1 active:shadow-none transition-all duration-300"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="w-5 h-5" />
+                  <span>SIGN OUT</span>
                 </button>
               </form>
             </motion.div>
