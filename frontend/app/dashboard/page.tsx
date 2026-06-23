@@ -1,7 +1,6 @@
 import React from 'react';
 import { createClient } from '../../utils/supabase/server';
 import { redirect } from 'next/navigation';
-import DashboardNav from '../../components/DashboardNav';
 import CountdownTimer from '../../components/CountdownTimer';
 import LetterClient from '../../components/LetterClient';
 import SanctuaryDock from '../../components/SanctuaryDock';
@@ -49,8 +48,6 @@ export default async function DashboardPage() {
       <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blush-pink/40 rounded-full blur-[100px] opacity-70 pointer-events-none" />
       
       <div className="relative z-10 w-full max-w-5xl mx-auto flex flex-col items-center">
-        
-        <DashboardNav />
         <SanctuaryDock />
 
         <header className="w-full flex flex-col-reverse md:flex-row items-center justify-between gap-6 mb-16 pt-8 px-4">
