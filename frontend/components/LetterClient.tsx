@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import Envelope from './Envelope';
+import Mailbox from './Mailbox';
 import { motion, AnimatePresence } from 'framer-motion';
 import { API_BASE_URL } from '../utils/api';
 import dynamic from 'next/dynamic';
@@ -77,8 +77,8 @@ export default function LetterClient({ letter }: LetterClientProps) {
   return (
     <>
       <div className="w-full flex flex-col items-center animate-in fade-in slide-in-from-bottom-8 duration-1000">
-        {/* Pass title as prop — no children content rendered inside envelope */}
-        <Envelope
+        <Mailbox
+          hasMail={!!letter}
           title={letter.title || 'A Letter for You'}
           onLetterClick={() => setIsEnlarged(true)}
         />

@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useTheme } from './ThemeProvider';
 
 export default function CountdownTimer() {
+  const { theme } = useTheme();
   const [timeLeft, setTimeLeft] = useState<{ hours: number; minutes: number; seconds: number }>({
     hours: 0,
     minutes: 0,
@@ -16,7 +18,6 @@ export default function CountdownTimer() {
     setMounted(true);
     const calculateTimeLeft = () => {
       const now = new Date();
-      // Next day, 00:00:00 local time
       const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
       const difference = tomorrow.getTime() - now.getTime();
 
@@ -29,64 +30,79 @@ export default function CountdownTimer() {
       }
     };
 
-    calculateTimeLeft(); // initialize immediately inside useEffect
+    calculateTimeLeft();
     const timer = setInterval(calculateTimeLeft, 1000);
-
     return () => clearInterval(timer);
   }, []);
 
-  // Avoid hydration mismatch by waiting to render the exact time
   if (!mounted) {
     return (
-      <div className="flex flex-col items-center justify-center space-y-4 opacity-0">
+      <div className="flex flex-col items-center justify-center space-y-4 opacity-0 h-[200px]">
         <h3 className="text-rose-gold text-xs uppercase tracking-[0.3em] font-semibold">
           Next Delivery In
         </h3>
-        <div className="flex items-center gap-4 text-deep-velvet font-serif text-5xl md:text-6xl">
-          <span>00:00:00</span>
-        </div>
       </div>
     );
   }
 
   const pad = (num: number) => String(num).padStart(2, '0');
 
-  // Gentle, slow breathing animation loop
-  const breathingVariants = {
+  // Floating bob animation
+  const floatingVariants = {
     animate: {
-      scale: [1, 1.05, 1],
+      y: [0, -8, 0],
       transition: {
-        duration: 4,
+        duration: 3,
         repeat: Infinity,
         ease: "easeInOut" as const
       }
     }
   };
 
+  const blockColors = theme === 'barbie' 
+    ? 'bg-gradient-to-b from-white to-[#ffb6c1] border-[#ffb6c1]' // Pastel Pink
+    : 'bg-gradient-to-b from-white to-[#add8e6] border-[#add8e6]'; // Pastel Blue
+
   return (
-    <div className="flex flex-col items-center justify-center space-y-6">
-      <h3 className="text-[#a57070] text-xs uppercase tracking-[0.3em] font-semibold">
+    <div className="flex flex-col items-center justify-center space-y-8 py-8 w-full">
+      <h3 className="text-deep-velvet/60 text-xs uppercase tracking-[0.3em] font-bold">
         Next delivery in...
       </h3>
 
-      <div className="flex items-center justify-center gap-4 md:gap-6 text-deep-velvet font-serif text-5xl md:text-7xl">
-        <motion.div variants={breathingVariants} animate="animate" className="flex flex-col items-center">
-          <span className="drop-shadow-sm">{pad(timeLeft.hours)}</span>
-          <span className="text-[10px] md:text-xs font-sans tracking-[0.2em] uppercase text-[#a57070]/70 mt-2">Hours</span>
+      <div className="flex items-center justify-center gap-3 md:gap-6 w-full max-w-lg px-2">
+        <motion.div variants={floatingVariants} animate="animate" className="flex flex-col items-center flex-1">
+          <div className={`w-full aspect-[3/4] max-h-[140px] flex items-center justify-center rounded-2xl md:rounded-3xl border-b-8 shadow-xl relative overflow-hidden ${blockColors}`}>
+            {/* Glossy highlight */}
+            <div className="absolute top-0 inset-x-0 h-1/2 bg-white/40 backdrop-blur-sm pointer-events-none" />
+            <span className="text-5xl md:text-7xl font-black text-deep-velvet drop-shadow-md z-10">{pad(timeLeft.hours)}</span>
+          </div>
+          <span className="text-[10px] md:text-xs font-bold tracking-[0.2em] uppercase text-deep-velvet/50 mt-4 bg-white/50 px-3 py-1 rounded-full shadow-sm">Hours</span>
         </motion.div>
         
-        <span className="text-rose-gold/50 -mt-8 animate-pulse">:</span>
+        <div className="flex flex-col items-center justify-center pb-8">
+          <span className="text-deep-velvet/40 text-4xl animate-pulse font-black">:</span>
+        </div>
 
-        <motion.div variants={breathingVariants} animate="animate" className="flex flex-col items-center">
-          <span className="drop-shadow-sm">{pad(timeLeft.minutes)}</span>
-          <span className="text-[10px] md:text-xs font-sans tracking-[0.2em] uppercase text-[#a57070]/70 mt-2">Mins</span>
+        <motion.div variants={floatingVariants} animate="animate" transition={{ delay: 0.5 }} className="flex flex-col items-center flex-1">
+          <div className={`w-full aspect-[3/4] max-h-[140px] flex items-center justify-center rounded-2xl md:rounded-3xl border-b-8 shadow-xl relative overflow-hidden ${blockColors}`}>
+             {/* Glossy highlight */}
+             <div className="absolute top-0 inset-x-0 h-1/2 bg-white/40 backdrop-blur-sm pointer-events-none" />
+            <span className="text-5xl md:text-7xl font-black text-deep-velvet drop-shadow-md z-10">{pad(timeLeft.minutes)}</span>
+          </div>
+          <span className="text-[10px] md:text-xs font-bold tracking-[0.2em] uppercase text-deep-velvet/50 mt-4 bg-white/50 px-3 py-1 rounded-full shadow-sm">Mins</span>
         </motion.div>
 
-        <span className="text-rose-gold/50 -mt-8 animate-pulse">:</span>
+        <div className="flex flex-col items-center justify-center pb-8">
+          <span className="text-deep-velvet/40 text-4xl animate-pulse font-black">:</span>
+        </div>
 
-        <motion.div variants={breathingVariants} animate="animate" className="flex flex-col items-center">
-          <span className="drop-shadow-sm">{pad(timeLeft.seconds)}</span>
-          <span className="text-[10px] md:text-xs font-sans tracking-[0.2em] uppercase text-[#a57070]/70 mt-2">Secs</span>
+        <motion.div variants={floatingVariants} animate="animate" transition={{ delay: 1 }} className="flex flex-col items-center flex-1">
+          <div className={`w-full aspect-[3/4] max-h-[140px] flex items-center justify-center rounded-2xl md:rounded-3xl border-b-8 shadow-xl relative overflow-hidden ${blockColors}`}>
+             {/* Glossy highlight */}
+             <div className="absolute top-0 inset-x-0 h-1/2 bg-white/40 backdrop-blur-sm pointer-events-none" />
+            <span className="text-5xl md:text-7xl font-black text-deep-velvet drop-shadow-md z-10">{pad(timeLeft.seconds)}</span>
+          </div>
+          <span className="text-[10px] md:text-xs font-bold tracking-[0.2em] uppercase text-deep-velvet/50 mt-4 bg-white/50 px-3 py-1 rounded-full shadow-sm">Secs</span>
         </motion.div>
       </div>
     </div>
