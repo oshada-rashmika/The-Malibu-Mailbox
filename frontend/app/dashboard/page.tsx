@@ -3,6 +3,7 @@ import { createClient } from '../../utils/supabase/server';
 import { redirect } from 'next/navigation';
 import CountdownTimer from '../../components/CountdownTimer';
 import LetterClient from '../../components/LetterClient';
+import VirtualPet from '../../components/VirtualPet';
 import SanctuaryDock from '../../components/SanctuaryDock';
 
 
@@ -55,6 +56,8 @@ export default async function DashboardPage() {
         </header>
 
         <section className="w-full max-w-2xl flex flex-col items-center space-y-16">
+          <VirtualPet />
+          
           {/* Global Countdown Timer */}
           <div className="bg-white border-4 border-deep-velvet p-8 w-full shadow-[8px_8px_0px_rgba(0,0,0,0.1)]">
             <CountdownTimer />
