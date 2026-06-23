@@ -4,7 +4,8 @@
   "description": "> “Some love letters aren’t written all at once… they arrive, one magical day at a time.” ✨",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "next dev"
   },
   "repository": {
     "type": "git",
@@ -24,5 +25,10 @@
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.8.3",
     "typescript-eslint": "^8.59.1"
+  },
+  "dependencies": {
+    "next": "^16.2.9",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
   }
 }
