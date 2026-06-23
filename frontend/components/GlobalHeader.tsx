@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useTheme } from './ThemeProvider';
 import { X, LogOut, Heart } from 'lucide-react';
 import { signOut } from '../app/login/actions';
@@ -10,14 +11,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 export default function GlobalHeader() {
   const { theme, toggleTheme } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
+  const pathname = usePathname();
+
+  // Hide header on landing and login pages
+  if (pathname === '/' || pathname === '/login') {
+    return null;
+  }
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 p-4 flex justify-between items-center pointer-events-none">
+      <header className="fixed top-0 left-0 right-0 z-[100] p-4 flex justify-between items-center">
         {/* Magical Toggle (Top-Left) */}
         <button
           onClick={toggleTheme}
-          className="pointer-events-auto relative flex items-center bg-white/40 backdrop-blur-md rounded-full p-1 shadow-[0_4px_16px_rgba(31,38,135,0.2)] border border-white/50 w-[84px] h-[44px] outline-none"
+          className="relative flex items-center bg-white/40 backdrop-blur-md rounded-full p-1 shadow-[0_4px_16px_rgba(31,38,135,0.2)] border border-white/50 w-[84px] h-[44px] outline-none cursor-pointer"
         >
           {/* Active indicator sliding background */}
           <motion.div
@@ -36,7 +43,7 @@ export default function GlobalHeader() {
         {/* Hamburger Menu (Top-Right) */}
         <button
           onClick={() => setMenuOpen(true)}
-          className="pointer-events-auto w-[44px] h-[44px] flex items-center justify-center rounded-full bg-white/40 backdrop-blur-md border border-white/50 shadow-[0_4px_16px_rgba(31,38,135,0.2)] hover:bg-white/60 transition-colors"
+          className="w-[44px] h-[44px] flex items-center justify-center rounded-full bg-white/40 backdrop-blur-md border border-white/50 shadow-[0_4px_16px_rgba(31,38,135,0.2)] hover:bg-white/60 transition-colors cursor-pointer"
         >
           {theme === 'barbie' ? (
             <img src="/heart.png" alt="Menu" className="w-6 h-6 object-contain drop-shadow-sm" />
@@ -62,7 +69,7 @@ export default function GlobalHeader() {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed inset-y-0 right-0 w-full sm:w-80 bg-background border-l-4 border-deep-velvet z-[100] flex flex-col p-6 items-center justify-center"
+              className="fixed inset-y-0 right-0 w-full sm:w-80 bg-background border-l-4 border-deep-velvet z-[110] flex flex-col p-6 items-center justify-center"
             >
               <div className="absolute top-6 right-6">
                 <button
