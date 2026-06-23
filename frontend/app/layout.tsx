@@ -47,7 +47,7 @@ export default function RootLayout({
       lang="en"
       className="h-full antialiased"
     >
-      <body className={`${inter.variable} ${playfair.variable} ${dancing.variable} ${sacramento.variable} ${vt323.variable} min-h-full flex flex-col font-sans bg-silk-white bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[var(--theme-bg-grad-start)] to-[var(--theme-bg-grad-end)] selection:bg-rose-gold/30 selection:text-deep-velvet transition-colors duration-500`}>
+      <body className={`${inter.variable} ${playfair.variable} ${dancing.variable} ${sacramento.variable} ${vt323.variable} min-h-full flex flex-col font-sans bg-background selection:bg-rose-gold/30 selection:text-deep-velvet transition-colors duration-500`}>
         <ThemeProvider>
           <GlobalHeader />
           <PopUpBlessing />

@@ -60,8 +60,8 @@ export default function CountdownTimer() {
   };
 
   const blockColors = theme === 'barbie' 
-    ? 'bg-gradient-to-b from-white to-[#ffb6c1] border-[#ffb6c1]' // Pastel Pink
-    : 'bg-gradient-to-b from-white to-[#add8e6] border-[#add8e6]'; // Pastel Blue
+    ? 'bg-[#ffb6c1] border-[#ff69b4]' // Pastel Pink
+    : 'bg-[#add8e6] border-[#87cefa]'; // Pastel Blue
 
   return (
     <div className="flex flex-col items-center justify-center space-y-8 py-8 w-full">
@@ -71,12 +71,10 @@ export default function CountdownTimer() {
 
       <div className="flex items-center justify-center gap-3 md:gap-6 w-full max-w-lg px-2">
         <motion.div variants={floatingVariants} animate="animate" className="flex flex-col items-center flex-1">
-          <div className={`w-full aspect-[3/4] max-h-[140px] flex items-center justify-center rounded-2xl md:rounded-3xl border-b-8 shadow-xl relative overflow-hidden ${blockColors}`}>
-            {/* Glossy highlight */}
-            <div className="absolute top-0 inset-x-0 h-1/2 bg-white/40 backdrop-blur-sm pointer-events-none" />
-            <span className="text-5xl md:text-7xl font-black text-deep-velvet drop-shadow-md z-10">{pad(timeLeft.hours)}</span>
+          <div className={`w-full aspect-[3/4] max-h-[140px] flex items-center justify-center border-4 relative overflow-hidden ${blockColors} shadow-[4px_4px_0px_rgba(0,0,0,0.1)]`}>
+            <span className="text-5xl md:text-7xl font-black text-deep-velvet z-10">{pad(timeLeft.hours)}</span>
           </div>
-          <span className="text-[10px] md:text-xs font-bold tracking-[0.2em] uppercase text-deep-velvet/50 mt-4 bg-white/50 px-3 py-1 rounded-full shadow-sm">Hours</span>
+          <span className="text-[10px] md:text-xs font-bold tracking-[0.2em] uppercase text-deep-velvet mt-4 bg-white border-2 border-deep-velvet px-3 py-1 shadow-[2px_2px_0px_rgba(0,0,0,0.1)]">Hours</span>
         </motion.div>
         
         <div className="flex flex-col items-center justify-center pb-8">
@@ -84,12 +82,10 @@ export default function CountdownTimer() {
         </div>
 
         <motion.div variants={floatingVariants} animate="animate" transition={{ delay: 0.5 }} className="flex flex-col items-center flex-1">
-          <div className={`w-full aspect-[3/4] max-h-[140px] flex items-center justify-center rounded-2xl md:rounded-3xl border-b-8 shadow-xl relative overflow-hidden ${blockColors}`}>
-             {/* Glossy highlight */}
-             <div className="absolute top-0 inset-x-0 h-1/2 bg-white/40 backdrop-blur-sm pointer-events-none" />
-            <span className="text-5xl md:text-7xl font-black text-deep-velvet drop-shadow-md z-10">{pad(timeLeft.minutes)}</span>
+          <div className={`w-full aspect-[3/4] max-h-[140px] flex items-center justify-center border-4 relative overflow-hidden ${blockColors} shadow-[4px_4px_0px_rgba(0,0,0,0.1)]`}>
+            <span className="text-5xl md:text-7xl font-black text-deep-velvet z-10">{pad(timeLeft.minutes)}</span>
           </div>
-          <span className="text-[10px] md:text-xs font-bold tracking-[0.2em] uppercase text-deep-velvet/50 mt-4 bg-white/50 px-3 py-1 rounded-full shadow-sm">Mins</span>
+          <span className="text-[10px] md:text-xs font-bold tracking-[0.2em] uppercase text-deep-velvet mt-4 bg-white border-2 border-deep-velvet px-3 py-1 shadow-[2px_2px_0px_rgba(0,0,0,0.1)]">Mins</span>
         </motion.div>
 
         <div className="flex flex-col items-center justify-center pb-8">
@@ -97,12 +93,10 @@ export default function CountdownTimer() {
         </div>
 
         <motion.div variants={floatingVariants} animate="animate" transition={{ delay: 1 }} className="flex flex-col items-center flex-1">
-          <div className={`w-full aspect-[3/4] max-h-[140px] flex items-center justify-center rounded-2xl md:rounded-3xl border-b-8 shadow-xl relative overflow-hidden ${blockColors}`}>
-             {/* Glossy highlight */}
-             <div className="absolute top-0 inset-x-0 h-1/2 bg-white/40 backdrop-blur-sm pointer-events-none" />
-            <span className="text-5xl md:text-7xl font-black text-deep-velvet drop-shadow-md z-10">{pad(timeLeft.seconds)}</span>
+          <div className={`w-full aspect-[3/4] max-h-[140px] flex items-center justify-center border-4 relative overflow-hidden ${blockColors} shadow-[4px_4px_0px_rgba(0,0,0,0.1)]`}>
+            <span className="text-5xl md:text-7xl font-black text-deep-velvet z-10">{pad(timeLeft.seconds)}</span>
           </div>
-          <span className="text-[10px] md:text-xs font-bold tracking-[0.2em] uppercase text-deep-velvet/50 mt-4 bg-white/50 px-3 py-1 rounded-full shadow-sm">Secs</span>
+          <span className="text-[10px] md:text-xs font-bold tracking-[0.2em] uppercase text-deep-velvet mt-4 bg-white border-2 border-deep-velvet px-3 py-1 shadow-[2px_2px_0px_rgba(0,0,0,0.1)]">Secs</span>
         </motion.div>
       </div>
     </div>

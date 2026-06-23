@@ -26,20 +26,21 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-vt323);
+  --font-serif: var(--font-vt323);
+  --font-mono: var(--font-vt323);
 
   --color-rose-gold: var(--theme-rose-gold);
   --color-blush-pink: var(--theme-blush-pink);
   --color-silk-white: var(--theme-silk-white);
   --color-deep-velvet: var(--theme-deep-velvet);
 
-  --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-  --shadow-glass-sm: 0 4px 16px 0 rgba(31, 38, 135, 0.2);
-  --shadow-glass-border: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  --shadow-glass: none;
+  --shadow-glass-sm: none;
+  --shadow-glass-border: none;
 
-  --font-handwriting: "Dancing Script", cursive;
-  --font-cursive: "Dancing Script", cursive;
+  --font-handwriting: var(--font-vt323);
+  --font-cursive: var(--font-vt323);
 }
 
 .notebook-lines {
